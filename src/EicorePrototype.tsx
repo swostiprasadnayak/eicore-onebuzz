@@ -217,7 +217,7 @@ function MethodSelection({ onNext }: { onNext: () => void }) {
             </div>
             <h3 style={{ ...T(16, 700), marginTop: 16 }}>Drag &amp; drop files here</h3>
             <p style={{ ...T(14, 400, C.text3), marginTop: 8 }}>Supports PDF, DOCX, XLSX (max 25MB total)</p>
-            <button style={{ ...btn("secondary"), marginTop: 24 }}>Browse Files</button>
+            <button className="btn btn-secondary btn-lg" style={{ marginTop: 24  }}>Browse Files</button>
           </div>
 
           <div style={{ marginTop: 24 }}>
@@ -245,7 +245,7 @@ function MethodSelection({ onNext }: { onNext: () => void }) {
           </div>
 
           <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end", paddingTop: 24, borderTop: `1px solid ${C.border}` }}>
-            <button style={btn("brand")} onClick={onNext}>Extract Product Configuration</button>
+            <button className="btn btn-brand btn-lg" onClick={onNext}>Extract Product Configuration</button>
           </div>
         </div>
 
@@ -254,12 +254,12 @@ function MethodSelection({ onNext }: { onNext: () => void }) {
           <div style={{ ...card(20), opacity: 0.6 }}>
             <h3 style={T(14, 600)}>Select from Template</h3>
             <p style={{ ...T(12, 400, C.text3), marginTop: 4, marginBottom: 16 }}>Start with a pre-configured baseline product template.</p>
-            <button disabled style={{ ...btn("secondary"), width: "100%", cursor: "not-allowed" }}>Templates (Coming Soon)</button>
+            <button disabled className="btn btn-secondary btn-lg" style={{ width: "100%", cursor: "not-allowed"  }}>Templates (Coming Soon)</button>
           </div>
           <div style={card(20)}>
             <h3 style={T(14, 600)}>Manual Configuration</h3>
             <p style={{ ...T(12, 400, C.text3), marginTop: 4, marginBottom: 16 }}>Create plans and coverages manually, field-by-field.</p>
-            <button style={{ ...btn("secondary"), width: "100%" }}><Plus size={16} /> Build Manually</button>
+            <button className="btn btn-secondary btn-lg" style={{ width: "100%"  }}><Plus size={16} /> Build Manually</button>
           </div>
           <div style={card(20, C.rLg, { flex: 1 })}>
             <h3 style={{ ...T(14, 600), marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}><Clock size={16} /> Recent Config Drafts</h3>
@@ -395,8 +395,8 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
             <p style={{ ...T(13, 400, C.text2), marginTop: 2 }}>Review AI extracted parameters against the source documents.</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-            <button style={btn("secondary")} onClick={onBack}><ArrowLeft size={15} /> Back</button>
-            <button style={btn("brand")} onClick={onNext}>Proceed to Builder <ArrowRight size={16} /></button>
+            <button className="btn btn-secondary btn-lg" onClick={onBack}><ArrowLeft size={15} /> Back</button>
+            <button className="btn btn-brand btn-lg" onClick={onNext}>Proceed to Builder <ArrowRight size={16} /></button>
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -526,7 +526,7 @@ function UnifiedBuilder({ onNext }: { onNext: () => void }) {
       {/* stepper + cta */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 16, flexWrap: "wrap" }}>
         <StepperPill items={[{ label: "Config Product", state: "done" }, { label: "Config Rules", state: "done" }, { label: "Config Rating", state: "done" }, { label: "Issues Resolved", state: "active", n: 4 }, { label: "Product Review", state: "todo" }, { label: "Approved", state: "todo" }, { label: "Published", state: "todo" }]} />
-        <button style={btn("brand")} onClick={onNext}>Proceed to Review <ArrowRight size={16} /></button>
+        <button className="btn btn-brand btn-lg" onClick={onNext}>Proceed to Review <ArrowRight size={16} /></button>
       </div>
 
       {/* nudge */}
@@ -578,7 +578,7 @@ function UnifiedBuilder({ onNext }: { onNext: () => void }) {
             <div style={{ height: "100%", overflowY: "auto", padding: 24 }} className="animate-fade-in">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <h3 style={T(20, 700)}>Builder Overview</h3>
-                <button style={btn("primary", true)}><CheckCircle2 size={16} /> Mark Reviewed (0/151)</button>
+                <button className="btn btn-primary btn-sm"><CheckCircle2 size={16} /> Mark Reviewed (0/151)</button>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
                 <div style={{ ...card(16, C.rLg, { background: C.bgTertiary, display: "flex", alignItems: "center", gap: 16 }) }}>
@@ -619,9 +619,9 @@ function UnifiedBuilder({ onNext }: { onNext: () => void }) {
                   <span onClick={() => setDocOpen(!docOpen)} style={{ ...T(11, 700, C.warning), background: C.warningTint, padding: "4px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 4, border: `1px solid rgba(245,158,11,0.2)`, cursor: "pointer" }}><AlertCircle size={14} /> 75%</span>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button style={{ ...btn("secondary", true), color: C.error }}>Delete</button>
-                  <button style={btn("secondary", true)} onClick={() => setActiveNav("overview")}>Cancel</button>
-                  <button style={btn("brand", true)}>Save</button>
+                  <button className="btn btn-secondary btn-sm" style={{ color: C.error  }}>Delete</button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setActiveNav("overview")}>Cancel</button>
+                  <button className="btn btn-brand btn-sm">Save</button>
                 </div>
               </div>
               <div style={{ flex: 1, overflowY: "auto", padding: 24, background: C.bgTertiary }}>
@@ -792,12 +792,12 @@ function PrePublishReview({ onNext, onBack }: { onNext: () => void; onBack: () =
     <div style={{ height: "100%", maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column" }} className="animate-fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button style={btn("secondary", true)} onClick={onBack}><ArrowLeft size={14} /> Back</button>
+          <button className="btn btn-secondary btn-sm" onClick={onBack}><ArrowLeft size={14} /> Back</button>
           <h2 style={{ ...T(20, 700), marginLeft: 8 }}>Product Review — D.I.Y Health Insurance · Mini Plan</h2>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
-          <button style={btn("secondary")}>Configure Rules</button>
-          <button style={btn("brand")} onClick={onNext}>Submit for Approval →</button>
+          <button className="btn btn-secondary btn-lg">Configure Rules</button>
+          <button className="btn btn-brand btn-lg" onClick={onNext}>Submit for Approval →</button>
         </div>
       </div>
 
@@ -925,7 +925,7 @@ function StakeholderDashboard({ onBack }: { onBack: () => void }) {
             <StatusTag label="In Progress" kind="brand" />
           </div>
         </div>
-        <button style={btn("secondary")} onClick={onBack}>Back to Review</button>
+        <button className="btn btn-secondary btn-lg" onClick={onBack}>Back to Review</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
