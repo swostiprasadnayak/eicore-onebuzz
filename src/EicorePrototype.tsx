@@ -342,10 +342,9 @@ const EXTRACT_SECTIONS: ExSection[] = [
   ] },
 ];
 
-// How many doc tabs to show inline before collapsing the rest into "+N more"
-const DOC_TAB_VISIBLE = 3;
-
-function DocTabBar({ tabs, active, onSelect }: { tabs: string[]; active: number; onSelect: (i: number) => void }) {
+// How many doc tabs to show inline before collapsing into "+N more"
+// Full-width views (files/data only) pass Infinity → show all
+function DocTabBar({ tabs, active, onSelect, maxVisible = 3 }: { tabs: string[]; active: number; onSelect: (i: number) => void; maxVisible?: number }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -357,9 +356,9 @@ function DocTabBar({ tabs, active, onSelect }: { tabs: string[]; active: number;
     return () => document.removeEventListener("mousedown", handler);
   }, [dropdownOpen]);
 
-  const visible = tabs.slice(0, DOC_TAB_VISIBLE);
-  const overflow = tabs.slice(DOC_TAB_VISIBLE);
-  const overflowContainsActive = active >= DOC_TAB_VISIBLE;
+  const visible = tabs.slice(0, maxVisible);
+  const overflow = tabs.slice(maxVisible);
+  const overflowContainsActive = active >= maxVisible;
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
     padding: "10px 14px", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" as const,
@@ -389,14 +388,14 @@ function DocTabBar({ tabs, active, onSelect }: { tabs: string[]; active: number;
           </button>
 
           {dropdownOpen && (
-            <div style={{ position: "absolute" as const, top: "calc(100% + 4px)", left: 0, zIndex: 50, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 220, overflow: "hidden" }}>
+            <div style={{ position: "absolute" as const, top: "calc(100% + 4px)", right: 0, zIndex: 9999, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.14)", minWidth: 260, overflow: "hidden" }}>
               {overflow.map((t, j) => {
-                const realIndex = DOC_TAB_VISIBLE + j;
+                const realIndex = maxVisible + j;
                 const isAct = active === realIndex;
                 return (
                   <button key={j} onClick={() => { onSelect(realIndex); setDropdownOpen(false); }}
-                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 14px", border: "none", textAlign: "left" as const, cursor: "pointer", background: isAct ? C.brandTint : "transparent", color: isAct ? C.brand : C.text2, fontSize: 12, fontWeight: isAct ? 600 : 400 }}>
-                    <FileText size={12} color={isAct ? C.brand : C.text3} />
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "10px 14px", border: "none", textAlign: "left" as const, cursor: "pointer", whiteSpace: "nowrap" as const, background: isAct ? C.brandTint : "transparent", color: isAct ? C.brand : C.text2, fontSize: 12, fontWeight: isAct ? 600 : 400 }}>
+                    <FileText size={12} color={isAct ? C.brand : C.text3} style={{ flexShrink: 0 }} />
                     {t}
                   </button>
                 );
@@ -492,7 +491,7 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
       <div style={{ flex: 1, display: "flex", gap: paneView === "split" ? 24 : 0, overflow: "hidden" }}>
         {/* Left doc */}
         <div style={{ ...card(0), width: paneView === "split" ? "50%" : "100%", display: paneView === "data" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
-          <DocTabBar tabs={docTabs} active={docTab} onSelect={setDocTab} />
+          <DocTabBar tabs={docTabs} active={docTab} onSelect={setDocTab} maxVisible={paneView === "split" ? 3 : Infinity} />
           <div style={{ flex: 1, overflowY: "auto", padding: 24, background: C.card }}>
             <p style={{ ...T(11, 600, C.brand), marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}><Link2 size={12} /> Tip: click a highlighted value to jump to its extracted field</p>
             <h4 style={{ ...T(15, 700), marginBottom: 16 }}>SECTION 2. PLANS DEFINITION</h4>
@@ -506,17 +505,19 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
 
         {/* Right extracted */}
         <div style={{ ...card(0), width: paneView === "split" ? "50%" : "100%", display: paneView === "files" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ padding: 14, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bgTertiary }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 42, height: 42, borderRadius: "50%", border: `4px solid ${C.success}`, display: "flex", alignItems: "center", justifyContent: "center", background: C.successTint }}><span style={T(14, 700, C.success)}>89%</span></div>
-              <div>
-                <h3 style={T(14, 700)}>Extraction Quality: Good</h3>
-                <p style={{ ...T(12, 400, C.text2), marginTop: 2 }}>130 of 145 parameters cleanly extracted</p>
-              </div>
+          <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bgTertiary, gap: 12 }}>
+            {/* Compact quality strip */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px 3px 6px", borderRadius: C.rFull, background: C.successTint, border: `1px solid rgba(5,150,105,0.2)` }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.success, flexShrink: 0 }} />
+                <span style={T(12, 700, C.success)}>89%</span>
+                <span style={T(11, 400, C.success)}>Good</span>
+              </span>
+              <span style={T(12, 400, C.text2)}>130 / 145 parameters extracted</span>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <span style={pill(C.success, C.successTint)}><CheckCircle2 size={12} /> 6 High</span>
-              <span style={pill(C.warning, C.warningTint)}><AlertTriangle size={12} /> 1 Warning</span>
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              <span style={pill(C.success, C.successTint)}><CheckCircle2 size={11} /> 6 High</span>
+              <span style={pill(C.warning, C.warningTint)}><AlertTriangle size={11} /> 1 Warning</span>
             </div>
           </div>
 
