@@ -342,6 +342,73 @@ const EXTRACT_SECTIONS: ExSection[] = [
   ] },
 ];
 
+// How many doc tabs to show inline before collapsing the rest into "+N more"
+const DOC_TAB_VISIBLE = 3;
+
+function DocTabBar({ tabs, active, onSelect }: { tabs: string[]; active: number; onSelect: (i: number) => void }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handler = (e: MouseEvent) => { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setDropdownOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dropdownOpen]);
+
+  const visible = tabs.slice(0, DOC_TAB_VISIBLE);
+  const overflow = tabs.slice(DOC_TAB_VISIBLE);
+  const overflowContainsActive = active >= DOC_TAB_VISIBLE;
+
+  const tabStyle = (isActive: boolean): React.CSSProperties => ({
+    padding: "10px 14px", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" as const,
+    border: "none", borderBottom: `2px solid ${isActive ? C.brand : "transparent"}`,
+    background: isActive ? C.card : "transparent", color: isActive ? C.brand : C.text2,
+    cursor: "pointer", flexShrink: 0,
+  });
+
+  return (
+    <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, background: C.bgTertiary, alignItems: "stretch", position: "relative" as const, minWidth: 0 }}>
+      {/* Visible tabs — scroll if needed, fade right edge */}
+      <div style={{ flex: 1, display: "flex", overflowX: "hidden", minWidth: 0, maskImage: overflow.length > 0 ? "linear-gradient(to right, black 85%, transparent 100%)" : "none", WebkitMaskImage: overflow.length > 0 ? "linear-gradient(to right, black 85%, transparent 100%)" : "none" }}>
+        {visible.map((t, i) => (
+          <button key={i} className="nav-tab" onClick={() => onSelect(i)} style={tabStyle(active === i)}>{t}</button>
+        ))}
+      </div>
+
+      {overflow.length > 0 && (
+        <div ref={dropRef} style={{ position: "relative" as const, display: "flex", alignItems: "center", paddingInline: 8, flexShrink: 0 }}>
+          <button
+            onClick={() => setDropdownOpen(o => !o)}
+            style={{ ...tabStyle(overflowContainsActive && !dropdownOpen), padding: "6px 10px", borderRadius: 6, border: `1px solid ${overflowContainsActive ? C.brand : C.border}`, background: overflowContainsActive ? C.brandTint : C.card, color: overflowContainsActive ? C.brand : C.text2, display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, borderBottom: "1px solid transparent" }}>
+            {overflowContainsActive
+              ? <><FileText size={11} />{tabs[active].replace(/\.[^.]+$/, "")}<ChevronDown size={11} /></>
+              : <><span>+{overflow.length} more</span><ChevronDown size={11} /></>
+            }
+          </button>
+
+          {dropdownOpen && (
+            <div style={{ position: "absolute" as const, top: "calc(100% + 4px)", left: 0, zIndex: 50, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 220, overflow: "hidden" }}>
+              {overflow.map((t, j) => {
+                const realIndex = DOC_TAB_VISIBLE + j;
+                const isAct = active === realIndex;
+                return (
+                  <button key={j} onClick={() => { onSelect(realIndex); setDropdownOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 14px", border: "none", textAlign: "left" as const, cursor: "pointer", background: isAct ? C.brandTint : "transparent", color: isAct ? C.brand : C.text2, fontSize: 12, fontWeight: isAct ? 600 : 400 }}>
+                    <FileText size={12} color={isAct ? C.brand : C.text3} />
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const [docTab, setDocTab] = useState(0);
   const [paneView, setPaneView] = useState<"split" | "files" | "data">("split");
@@ -349,7 +416,7 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
   const [openSection, setOpenSection] = useState<string>("plans"); // accordion: one open at a time
   const docRefs = useRef<Record<string, HTMLElement | null>>({});
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
-  const docTabs = ["BRD_DIY_Health.docx", "D.I.Y Health policy wording.docx", "DIY Rates.xlsx"];
+  const docTabs = ["BRD_DIY_Health.docx", "D.I.Y Health policy wording.docx", "DIY Rates.xlsx", "DIY Proposal Form.docx", "DIY Addendum v2.docx"];
 
   const toggleSection = (id: string) => setOpenSection(o => (o === id ? "" : id));
 
@@ -425,11 +492,7 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
       <div style={{ flex: 1, display: "flex", gap: paneView === "split" ? 24 : 0, overflow: "hidden" }}>
         {/* Left doc */}
         <div style={{ ...card(0), width: paneView === "split" ? "50%" : "100%", display: paneView === "data" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, background: C.bgTertiary, overflowX: "auto" }}>
-            {docTabs.map((t, i) => (
-              <button className="nav-tab" key={i} onClick={() => setDocTab(i)} style={{ padding: "10px 14px", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", border: "none", borderBottom: `2px solid ${docTab === i ? C.brand : "transparent"}`, background: docTab === i ? C.card : "transparent", color: docTab === i ? C.brand : C.text2, cursor: "pointer" }}>{t}</button>
-            ))}
-          </div>
+          <DocTabBar tabs={docTabs} active={docTab} onSelect={setDocTab} />
           <div style={{ flex: 1, overflowY: "auto", padding: 24, background: C.card }}>
             <p style={{ ...T(11, 600, C.brand), marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}><Link2 size={12} /> Tip: click a highlighted value to jump to its extracted field</p>
             <h4 style={{ ...T(15, 700), marginBottom: 16 }}>SECTION 2. PLANS DEFINITION</h4>
