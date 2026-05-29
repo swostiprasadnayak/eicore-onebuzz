@@ -106,10 +106,10 @@ function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSi
     <header style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: C.card, borderBottom: `1px solid ${C.border}`, borderRadius: "12px 12px 0 0", zIndex: 10, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <h1 style={{ fontWeight: 600, fontSize: 15, color: C.text, margin: 0 }}>Product Plan Builder</h1>
-        {showSidebarToggle && sidebarCollapsed && (
-          <button onClick={onToggleSidebar} title="Expand sidebar  ⌘B"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: C.brandTint, cursor: "pointer", color: C.brand }}>
-            <PanelLeftOpen size={18} />
+        {showSidebarToggle && (
+          <button onClick={onToggleSidebar} title={`${sidebarCollapsed ? "Expand" : "Collapse"} sidebar  ⌘B`}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: sidebarCollapsed ? C.brandTint : "transparent", cursor: "pointer", color: sidebarCollapsed ? C.brand : C.text2 }}>
+            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
         )}
       </div>
@@ -143,9 +143,8 @@ function StepSidebar({ currentStep, setCurrentStep, collapsed, onToggle }: { cur
   return (
     <aside style={{ width: collapsed ? 0 : 260, minWidth: collapsed ? 0 : 260, background: C.card, borderRight: collapsed ? "none" : `1px solid ${C.border}`, overflow: "hidden", transition: "width .22s ease, min-width .22s ease", flexShrink: 0 }}>
       <div style={{ width: 260, height: "100%", boxSizing: "border-box", overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, padding: "0 4px" }}>
-          <h3 style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Product Plan Builder</h3>
-          <button onClick={onToggle} title="Collapse sidebar  ⌘B" style={{ border: "none", background: "none", cursor: "pointer", color: C.text3, padding: 4, display: "flex" }}><PanelLeftClose size={16} /></button>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 16, padding: "0 4px" }}>
+          <h3 style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Builder Roadmap</h3>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {STEPS.map(step => {
