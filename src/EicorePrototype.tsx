@@ -104,15 +104,14 @@ function GlobalSidebar() {
 function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: "prototype" | "case-study"; setView: (v: "prototype" | "case-study") => void; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
   return (
     <header style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: C.card, borderBottom: `1px solid ${C.border}`, borderRadius: "12px 12px 0 0", zIndex: 10, flexShrink: 0 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {showSidebarToggle && (
-          <button onClick={onToggleSidebar} title={`${sidebarCollapsed ? "Expand" : "Collapse"} sidebar  ⌘B`}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: sidebarCollapsed ? C.brandTint : "transparent", cursor: "pointer", color: sidebarCollapsed ? C.brand : C.text2 }}>
-            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <h1 style={{ fontWeight: 600, fontSize: 15, color: C.text, margin: 0 }}>Product Plan Builder</h1>
+        {showSidebarToggle && sidebarCollapsed && (
+          <button onClick={onToggleSidebar} title="Expand sidebar  ⌘B"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: C.brandTint, cursor: "pointer", color: C.brand }}>
+            <PanelLeftOpen size={18} />
           </button>
         )}
-        <button style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: "transparent", cursor: "pointer", color: C.text2 }}><X size={18} /></button>
-        <h1 style={{ fontWeight: 600, fontSize: 15, color: C.text, margin: 0 }}>Product Plan Builder</h1>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: C.bgTertiary, border: `1px solid ${C.border}` }}>
