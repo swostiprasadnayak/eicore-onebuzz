@@ -116,7 +116,7 @@ function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSi
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: C.bgTertiary, border: `1px solid ${C.border}` }}>
           {(["prototype", "case-study"] as const).map(v => (
-            <button key={v} onClick={() => setView(v)}
+            <button className="nav-tab" key={v} onClick={() => setView(v)}
               style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: view === v ? C.card : "transparent", color: view === v ? C.brand : C.text3, boxShadow: view === v ? C.shadowSm : "none" }}>
               {v === "prototype" ? "Prototype" : "Case Study"}
             </button>
@@ -151,7 +151,7 @@ function StepSidebar({ currentStep, setCurrentStep, collapsed, onToggle }: { cur
           const isActive = currentStep === step.id;
           const isPast = currentStep > step.id;
           return (
-            <div key={step.id} onClick={() => setCurrentStep(step.id)}
+            <div key={step.id} onClick={() => setCurrentStep(step.id)} className="sidebar-step-card"
               style={{ background: C.card, borderRadius: 8, padding: "14px 16px", cursor: "pointer", transition: "all .15s ease", border: `1px solid ${isActive ? C.border : "transparent"}`, boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.06)" : "none", opacity: isPast ? 0.85 : 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {isPast || isActive
@@ -211,7 +211,7 @@ function MethodSelection({ onNext }: { onNext: () => void }) {
         {/* Left: upload */}
         <div style={card(24)}>
           <div onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); }}
-            style={{ border: `1px dashed ${drag ? C.brand : C.borderStrong}`, borderRadius: C.rLg, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", background: drag ? "rgba(4,120,87,0.02)" : C.bgTertiary, transition: "all .25s", cursor: "pointer" }}>
+            className="upload-zone" style={{ border: `1px dashed ${drag ? C.brand : C.borderStrong}`, borderRadius: C.rLg, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", background: drag ? "rgba(4,120,87,0.02)" : C.bgTertiary, transition: "all .25s", cursor: "pointer" }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.brandTint, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
               <UploadCloud size={40} color={C.brand} />
             </div>
@@ -418,7 +418,7 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
           <Link2 size={14} color={C.brand} />
           <span style={T(12, 700, C.brand)}>Linked: {activeLabel}</span>
           <span style={T(12, 400, C.text2)}>— highlighted in both source &amp; extracted data</span>
-          <button onClick={() => setActiveLink(null)} style={{ marginLeft: "auto", ...T(12, 600, C.text2), background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><X size={12} /> Clear</button>
+          <button className="nav-tab" onClick={() => setActiveLink(null)} style={{ marginLeft: "auto", ...T(12, 600, C.text2), background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><X size={12} /> Clear</button>
         </div>
       )}
 
@@ -427,7 +427,7 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
         <div style={{ ...card(0), width: paneView === "split" ? "50%" : "100%", display: paneView === "data" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, background: C.bgTertiary, overflowX: "auto" }}>
             {docTabs.map((t, i) => (
-              <button key={i} onClick={() => setDocTab(i)} style={{ padding: "10px 14px", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", border: "none", borderBottom: `2px solid ${docTab === i ? C.brand : "transparent"}`, background: docTab === i ? C.card : "transparent", color: docTab === i ? C.brand : C.text2, cursor: "pointer" }}>{t}</button>
+              <button className="nav-tab" key={i} onClick={() => setDocTab(i)} style={{ padding: "10px 14px", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", border: "none", borderBottom: `2px solid ${docTab === i ? C.brand : "transparent"}`, background: docTab === i ? C.card : "transparent", color: docTab === i ? C.brand : C.text2, cursor: "pointer" }}>{t}</button>
             ))}
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: 24, background: C.card }}>

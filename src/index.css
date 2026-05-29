@@ -157,3 +157,19 @@ button:hover {
 button:active {
   filter: brightness(0.92);
 }
+
+/* Interactive element hovers */
+.sidebar-step-card:hover {
+  background: var(--color-bg-tertiary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.upload-zone:hover {
+  border-color: var(--color-brand-primary) !important;
+  background: rgba(4, 120, 87, 0.03) !important;
+}
+
+.nav-tab:hover {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
