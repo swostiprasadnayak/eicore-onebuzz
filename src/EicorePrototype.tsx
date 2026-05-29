@@ -1,0 +1,1036 @@
+import { useState, useRef, useEffect } from "react";
+import {
+  X, Eye, LayoutGrid, Package, CreditCard, GitBranch, LayoutTemplate, Users,
+  ChevronDown, ChevronRight, CheckCircle2, Circle, UploadCloud, FileText,
+  FileSpreadsheet, Plus, Clock, ArrowRight, ArrowLeft, AlertTriangle, AlertCircle,
+  FileSearch, ShieldCheck, FolderTree, BookOpen, Settings, Activity, ExternalLink,
+  Shield, Calendar, FileType, Link2, PanelLeftClose, PanelLeftOpen,
+} from "lucide-react";
+import { C, T, card, pill, btn } from "./theme";
+import CaseStudy from "./CaseStudy";
+import CommentsLayer from "./CommentsLayer";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared bits
+// ─────────────────────────────────────────────────────────────────────────────
+function RainbowLogo({ size = 32 }: { size?: number }) {
+  const dots: [number, number, number, string][] = [
+    [50, 15, 5, "#E83A59"], [68, 20, 4.5, "#D9467C"], [80, 32, 4.5, "#A855F7"],
+    [85, 50, 5, "#6366F1"], [80, 68, 4.5, "#3B82F6"], [68, 80, 4.5, "#0EA5E9"],
+    [50, 85, 5, "#06B6D4"], [32, 80, 4.5, "#14B8A6"], [20, 68, 4.5, "#10B981"],
+    [15, 50, 5, "#22C55E"], [20, 32, 4.5, "#F59E0B"], [32, 20, 4.5, "#F97316"],
+    [50, 28, 3.5, "#E83A59"], [62, 34, 3.5, "#A855F7"], [72, 50, 3.5, "#6366F1"],
+    [62, 66, 3.5, "#0EA5E9"], [50, 72, 3.5, "#14B8A6"], [38, 66, 3.5, "#10B981"],
+    [28, 50, 3.5, "#F59E0B"], [38, 34, 3.5, "#F97316"],
+  ];
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size}>
+      {dots.map(([cx, cy, r, fill], i) => <circle key={i} cx={cx} cy={cy} r={r} fill={fill} />)}
+    </svg>
+  );
+}
+
+function StatusTag({ label, kind }: { label: string; kind: "brand" | "success" | "warning" | "error" | "neutral" }) {
+  const map = {
+    brand: { c: C.brand, b: C.brandTint }, success: { c: C.success, b: C.successTint },
+    warning: { c: C.warning, b: C.warningTint }, error: { c: C.error, b: C.errorTint },
+    neutral: { c: C.text2, b: "#F3F4F6" },
+  }[kind];
+  return <span style={{ ...pill(map.c, map.b), fontSize: 10, textTransform: "uppercase", letterSpacing: "0.04em", padding: "2px 8px", border: `1px solid ${map.c}20` }}>{label}</span>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Global icon rail
+// ─────────────────────────────────────────────────────────────────────────────
+function GlobalSidebar() {
+  const [expanded, setExpanded] = useState(false);
+  const [cfgOpen, setCfgOpen] = useState(true);
+  const navItems = [
+    { icon: CreditCard, label: "Billing" }, { icon: GitBranch, label: "Workflows" },
+    { icon: LayoutTemplate, label: "Templates" },
+  ];
+  const itemStyle = (active = false): React.CSSProperties => ({
+    display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+    borderRadius: active ? 10 : 8, border: "none",
+    background: active ? C.brandTintSoft : "transparent",
+    color: active ? C.brand : C.text2, cursor: "pointer", whiteSpace: "nowrap",
+    width: "100%", textAlign: "left", fontSize: 14, fontWeight: active ? 600 : 500,
+  });
+  return (
+    <aside
+      onMouseEnter={() => setExpanded(true)} onMouseLeave={() => setExpanded(false)}
+      style={{
+        width: expanded ? 240 : 64, minWidth: expanded ? 240 : 64,
+        transition: "width .25s ease, min-width .25s ease", height: "100vh",
+        background: C.card, borderRight: `1px solid ${C.border}`, display: "flex",
+        flexDirection: "column", overflow: "hidden", flexShrink: 0, zIndex: 50,
+      }}>
+      <div style={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <RainbowLogo />
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "16px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
+        <button style={itemStyle()}><LayoutGrid size={20} style={{ flexShrink: 0 }} />{expanded && <span>Dashboard</span>}</button>
+        <div>
+          <button style={itemStyle(true)} onClick={() => setCfgOpen(!cfgOpen)}>
+            <Package size={20} style={{ flexShrink: 0 }} />
+            {expanded && (<><span style={{ flex: 1 }}>Product Config</span>{cfgOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</>)}
+          </button>
+          {expanded && cfgOpen && (
+            <div style={{ paddingLeft: 44, display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+              <button style={{ border: "none", background: "none", textAlign: "left", padding: "6px 8px", fontSize: 13, fontWeight: 700, color: C.text, cursor: "pointer", borderRadius: 6 }}>New Product</button>
+              <button style={{ border: "none", background: "none", textAlign: "left", padding: "6px 8px", fontSize: 13, fontWeight: 500, color: C.text2, cursor: "pointer", borderRadius: 6 }}>Products</button>
+            </div>
+          )}
+        </div>
+        {navItems.map(it => (
+          <button key={it.label} style={itemStyle()}><it.icon size={20} style={{ flexShrink: 0 }} />{expanded && <span>{it.label}</span>}</button>
+        ))}
+        <div style={{ margin: "8px 0", borderTop: `1px solid ${C.border}` }} />
+        <button style={itemStyle()}><Users size={20} style={{ flexShrink: 0 }} />{expanded && <span>Team</span>}</button>
+      </div>
+      <div style={{ padding: "12px 8px", borderTop: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", justifyContent: expanded ? "flex-start" : "center" }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.bgTertiary, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 700, color: C.text }}>DU</div>
+          {expanded && (<div style={{ display: "flex", flexDirection: "column" }}><span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Designer User</span><span style={{ fontSize: 11, color: C.text3 }}>Sign out</span></div>)}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Header (with Case Study / Prototype toggle)
+// ─────────────────────────────────────────────────────────────────────────────
+function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: "prototype" | "case-study"; setView: (v: "prototype" | "case-study") => void; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
+  return (
+    <header style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: C.card, borderBottom: `1px solid ${C.border}`, borderRadius: "12px 12px 0 0", zIndex: 10, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {showSidebarToggle && (
+          <button onClick={onToggleSidebar} title={`${sidebarCollapsed ? "Expand" : "Collapse"} sidebar  ⌘B`}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: sidebarCollapsed ? C.brandTint : "transparent", cursor: "pointer", color: sidebarCollapsed ? C.brand : C.text2 }}>
+            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+        )}
+        <button style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 6, border: "none", background: "transparent", cursor: "pointer", color: C.text2 }}><X size={18} /></button>
+        <h1 style={{ fontWeight: 600, fontSize: 15, color: C.text, margin: 0 }}>Product Plan Builder</h1>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: C.bgTertiary, border: `1px solid ${C.border}` }}>
+          {(["prototype", "case-study"] as const).map(v => (
+            <button key={v} onClick={() => setView(v)}
+              style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: view === v ? C.card : "transparent", color: view === v ? C.brand : C.text3, boxShadow: view === v ? C.shadowSm : "none" }}>
+              {v === "prototype" ? "Prototype" : "Case Study"}
+            </button>
+          ))}
+        </div>
+        <button style={{ display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}`, borderRadius: 6, width: 28, height: 28, color: C.text2, background: C.card, cursor: "pointer" }}><Eye size={14} /></button>
+      </div>
+    </header>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step sidebar (260px)
+// ─────────────────────────────────────────────────────────────────────────────
+const STEPS = [
+  { id: 1, name: "Configuration Method" },
+  { id: 2, name: "AI Extraction & Audit", subSteps: ["Source Documents", "Extraction Quality", "Parameter Audit"], progress: 66, currentSubStep: 1 },
+  { id: 3, name: "Unified Product Workspace" },
+  { id: 4, name: "Product Review & Publish" },
+  { id: 5, name: "Stakeholder Overview" },
+];
+
+function StepSidebar({ currentStep, setCurrentStep, collapsed, onToggle }: { currentStep: number; setCurrentStep: (n: number) => void; collapsed?: boolean; onToggle?: () => void }) {
+  return (
+    <aside style={{ width: collapsed ? 0 : 260, minWidth: collapsed ? 0 : 260, background: C.card, borderRight: collapsed ? "none" : `1px solid ${C.border}`, overflow: "hidden", transition: "width .22s ease, min-width .22s ease", flexShrink: 0 }}>
+      <div style={{ width: 260, height: "100%", boxSizing: "border-box", overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, padding: "0 4px" }}>
+          <h3 style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Product Plan Builder</h3>
+          <button onClick={onToggle} title="Collapse sidebar  ⌘B" style={{ border: "none", background: "none", cursor: "pointer", color: C.text3, padding: 4, display: "flex" }}><PanelLeftClose size={16} /></button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {STEPS.map(step => {
+          const isActive = currentStep === step.id;
+          const isPast = currentStep > step.id;
+          return (
+            <div key={step.id} onClick={() => setCurrentStep(step.id)}
+              style={{ background: C.card, borderRadius: 8, padding: "14px 16px", cursor: "pointer", transition: "all .15s ease", border: `1px solid ${isActive ? C.border : "transparent"}`, boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.06)" : "none", opacity: isPast ? 0.85 : 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {isPast || isActive
+                  ? <CheckCircle2 size={18} style={{ color: C.brand, flexShrink: 0 }} fill={C.brand} color="#fff" />
+                  : <Circle size={18} style={{ color: C.borderStrong, flexShrink: 0 }} />}
+                <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500, color: isActive || isPast ? C.text : "#6B7280" }}>{step.name}</span>
+              </div>
+              {isActive && step.subSteps && (
+                <div style={{ marginTop: 12, paddingLeft: 28 }}>
+                  <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{ fontSize: 11, color: "#6B7280", fontWeight: 500 }}>1 of {step.subSteps.length}</span>
+                    <div style={{ flex: 1, height: 4, background: C.border, borderRadius: 999, overflow: "hidden", margin: "0 8px" }}>
+                      <div style={{ height: "100%", background: C.brand, width: `${step.progress}%`, borderRadius: 999 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: "#6B7280", fontWeight: 500 }}>{step.progress}%</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {step.subSteps.map((sub, idx) => (
+                      <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {idx <= (step.currentSubStep ?? 0)
+                          ? <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.brand, flexShrink: 0 }} />
+                          : <div style={{ width: 8, height: 8, borderRadius: "50%", border: `2px solid ${C.borderStrong}`, flexShrink: 0 }} />}
+                        <span style={{ fontSize: 12, color: idx <= (step.currentSubStep ?? 0) ? C.text : "#6B7280", fontWeight: idx <= (step.currentSubStep ?? 0) ? 500 : 400 }}>{sub}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN 1 — Method Selection
+// ─────────────────────────────────────────────────────────────────────────────
+const FILES = [
+  { name: "BRD_DIY_Health_Ver0.11.docx", size: "5.4 MB", kind: "docx" },
+  { name: "D.I.Y Health policy wording.docx", size: "587.9 KB", kind: "docx" },
+  { name: "DIY Rates.xlsx", size: "28.0 KB", kind: "xlsx" },
+];
+
+function MethodSelection({ onNext }: { onNext: () => void }) {
+  const [files, setFiles] = useState(FILES);
+  const [drag, setDrag] = useState(false);
+  return (
+    <div style={{ maxWidth: 1200, margin: "0 auto" }} className="animate-fade-in">
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={T(20, 700)}>Generate Product via AI</h2>
+        <p style={{ ...T(14, 400, C.text2), marginTop: 4 }}>Upload your business requirement documents (BRD), policy wording, rate cards, and proposal forms.</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 24 }}>
+        {/* Left: upload */}
+        <div style={card(24)}>
+          <div onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); }}
+            style={{ border: `1px dashed ${drag ? C.brand : C.borderStrong}`, borderRadius: C.rLg, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", background: drag ? "rgba(4,120,87,0.02)" : C.bgTertiary, transition: "all .25s", cursor: "pointer" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.brandTint, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+              <UploadCloud size={40} color={C.brand} />
+            </div>
+            <h3 style={{ ...T(16, 700), marginTop: 16 }}>Drag &amp; drop files here</h3>
+            <p style={{ ...T(14, 400, C.text3), marginTop: 8 }}>Supports PDF, DOCX, XLSX (max 25MB total)</p>
+            <button style={{ ...btn("secondary"), marginTop: 24 }}>Browse Files</button>
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+              <span style={T(14, 600)}>Uploaded Files Queue</span>
+              <span style={T(14, 600, C.brand)}>{files.length} Files</span>
+            </div>
+            {files.map((f, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.bgTertiary, border: `1px solid ${C.border}`, borderRadius: C.rMd, marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: C.rSm, display: "flex", alignItems: "center", justifyContent: "center", background: f.kind === "xlsx" ? C.successTint : C.blueTint, color: f.kind === "xlsx" ? C.brandSecondary : C.blue }}>
+                    {f.kind === "xlsx" ? <FileSpreadsheet size={16} /> : <FileText size={16} />}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={T(13, 500)}>{f.name}</span>
+                    <span style={{ ...T(12, 400, C.text3), marginTop: 2 }}>{f.size}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={pill(C.success, C.successTint)}>Ready</span>
+                  <button onClick={() => setFiles(fs => fs.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: C.text3, display: "flex" }}><X size={16} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end", paddingTop: 24, borderTop: `1px solid ${C.border}` }}>
+            <button style={btn("brand")} onClick={onNext}>Extract Product Configuration</button>
+          </div>
+        </div>
+
+        {/* Right: secondary options */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ ...card(20), opacity: 0.6 }}>
+            <h3 style={T(14, 600)}>Select from Template</h3>
+            <p style={{ ...T(12, 400, C.text3), marginTop: 4, marginBottom: 16 }}>Start with a pre-configured baseline product template.</p>
+            <button disabled style={{ ...btn("secondary"), width: "100%", cursor: "not-allowed" }}>Templates (Coming Soon)</button>
+          </div>
+          <div style={card(20)}>
+            <h3 style={T(14, 600)}>Manual Configuration</h3>
+            <p style={{ ...T(12, 400, C.text3), marginTop: 4, marginBottom: 16 }}>Create plans and coverages manually, field-by-field.</p>
+            <button style={{ ...btn("secondary"), width: "100%" }}><Plus size={16} /> Build Manually</button>
+          </div>
+          <div style={card(20, C.rLg, { flex: 1 })}>
+            <h3 style={{ ...T(14, 600), marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}><Clock size={16} /> Recent Config Drafts</h3>
+            {[{ n: "Health Total (Generali)", t: "Today, 11:22 AM", p: "94%" }, { n: "D.I.Y Health Insurance", t: "Yesterday, 4:15 PM", p: "72%" }].map((d, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === 0 ? `1px solid ${C.border}` : "none" }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={T(14, 500)}>{d.n}</span>
+                  <span style={{ ...T(12, 400, C.text3), marginTop: 2 }}>{d.t}</span>
+                </div>
+                <span style={{ ...T(12, 600, C.brand), background: C.brandTint, padding: "2px 8px", borderRadius: C.rSm }}>{d.p}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN 2 — Extraction Preview
+// ─────────────────────────────────────────────────────────────────────────────
+function StepperPill({ items }: { items: { label: string; state: "done" | "active" | "todo"; n?: number }[] }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.card, border: `1px solid ${C.border}`, padding: "8px 16px", borderRadius: C.rFull, boxShadow: C.shadowSm, fontSize: 12, flexWrap: "wrap" }}>
+      {items.map((it, i) => (
+        <span key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: it.state === "active" ? 700 : 500, color: it.state === "done" ? C.success : it.state === "active" ? C.brand : C.text3 }}>
+            {it.state === "done" && <CheckCircle2 size={14} />}
+            {it.state === "active" && <span style={{ width: 16, height: 16, borderRadius: "50%", background: C.brand, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>{it.n}</span>}
+            {it.label}
+          </span>
+          {i < items.length - 1 && <span style={{ color: C.text3 }}>›</span>}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+type ExRow = { link?: string; cells: [string, string, string]; conf: number; warn?: boolean };
+type ExSection = { id: string; name: string; pct: number; cols: [string, string, string]; rows: ExRow[] };
+
+const EXTRACT_SECTIONS: ExSection[] = [
+  { id: "product", name: "1. Product Information", pct: 92, cols: ["Parameter", "Extracted Value", "Confidence"], rows: [
+    { cells: ["Product Name", "D.I.Y Health Insurance", "BRD Pg 1"], conf: 95 },
+    { cells: ["Product Type", "Health — Indemnity", "BRD Pg 1"], conf: 94 },
+    { cells: ["Insurer", "Studio Arsa Insurance Ltd.", "BRD Pg 1"], conf: 90 },
+  ] },
+  { id: "plans", name: "2. Plans Tiers Configuration", pct: 82, cols: ["Plan Tier", "Extracted Specs", "Confidence"], rows: [
+    { link: "mini-si", cells: ["Mini", "SI: ₹4L or ₹5L. Floater: Self, Spouse, Kids.", "BRD Pg 2, Sec 2.1"], conf: 92 },
+    { link: "medi-si", cells: ["Medi", "SI: ₹6L–₹10L. Adds Parents + in-laws.", "BRD Pg 2, Sec 2.2"], conf: 90 },
+    { link: "opd-limit", cells: ["OPD Limit (Mini)", "Annual limit ₹3,000 per policy", "BRD Pg 2, Sec 4.1"], conf: 75, warn: true },
+  ] },
+  { id: "coverage", name: "3. Coverage Details", pct: 89, cols: ["Coverage", "Extracted Value", "Confidence"], rows: [
+    { cells: ["Hospitalisation", "Up to Sum Insured", "Policy Sec 3"], conf: 93 },
+    { cells: ["Pre-hospitalisation", "60 days", "Policy Sec 3"], conf: 91 },
+    { cells: ["Day Care", "540+ procedures", "Policy Sec 3"], conf: 88 },
+  ] },
+  { id: "members", name: "4. Member Eligibility", pct: 93, cols: ["Member", "Entry Age", "Confidence"], rows: [
+    { cells: ["Self / Spouse", "18–65 yrs", "Proposal Sec 1"], conf: 95 },
+    { cells: ["Children", "91 days – 25 yrs", "Proposal Sec 1"], conf: 93 },
+    { cells: ["Parents", "Up to 70 yrs", "Proposal Sec 1"], conf: 79, warn: true },
+  ] },
+  { id: "benefits", name: "5. Benefits & Covers", pct: 89, cols: ["Benefit", "Extracted Value", "Confidence"], rows: [
+    { cells: ["Maternity (Normal)", "₹15,000", "BRD Pg 4"], conf: 84 },
+    { cells: ["Road Ambulance", "₹2,000 / event", "BRD Pg 4"], conf: 88 },
+  ] },
+  { id: "waiting", name: "6. Waiting Periods", pct: 90, cols: ["Type", "Period", "Confidence"], rows: [
+    { cells: ["Initial waiting", "30 days", "Policy Sec 5"], conf: 96 },
+    { cells: ["Pre-existing (PED)", "36 months", "Policy Sec 5"], conf: 90 },
+    { cells: ["Specific ailments", "24 months", "Policy Sec 5"], conf: 87 },
+  ] },
+  { id: "rating", name: "7. Premium Rating", pct: 86, cols: ["Factor", "Extracted Value", "Confidence"], rows: [
+    { cells: ["Base premium (Mini, 30y)", "₹6,200", "Rates.xlsx"], conf: 91 },
+    { cells: ["Zone loading", "Zone A +10%", "Rates.xlsx"], conf: 80, warn: true },
+  ] },
+  { id: "exclusions", name: "8. Exclusions", pct: 88, cols: ["Exclusion", "Extracted Value", "Confidence"], rows: [
+    { cells: ["Cosmetic surgery", "Excluded", "Policy Sec 6"], conf: 92 },
+    { cells: ["Dental (non-accident)", "Excluded", "Policy Sec 6"], conf: 85 },
+  ] },
+];
+
+function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const [docTab, setDocTab] = useState(0);
+  const [paneView, setPaneView] = useState<"split" | "files" | "data">("split");
+  const [activeLink, setActiveLink] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<string>("plans"); // accordion: one open at a time
+  const docRefs = useRef<Record<string, HTMLElement | null>>({});
+  const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
+  const docTabs = ["BRD_DIY_Health.docx", "D.I.Y Health policy wording.docx", "DIY Rates.xlsx"];
+
+  const toggleSection = (id: string) => setOpenSection(o => (o === id ? "" : id));
+
+  // Click a linked highlight (doc) or row (data) → reveal the pair in both panes
+  const jumpTo = (linkId: string) => {
+    const sec = EXTRACT_SECTIONS.find(s => s.rows.some(r => r.link === linkId));
+    if (sec) setOpenSection(sec.id);
+    setDocTab(0);
+    setPaneView("split");
+    setActiveLink(linkId);
+  };
+
+  useEffect(() => {
+    if (!activeLink) return;
+    const t = setTimeout(() => {
+      docRefs.current[activeLink]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      fieldRefs.current[activeLink]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 90);
+    return () => clearTimeout(t);
+  }, [activeLink, paneView, openSection]);
+
+  const activeLabel = activeLink ? (EXTRACT_SECTIONS.flatMap(s => s.rows).find(r => r.link === activeLink)?.cells[0] ?? "") : "";
+
+  // Clickable source highlight inside the document
+  const DocMark = ({ id, tone, children }: { id: string; tone: "brand" | "warn"; children: React.ReactNode }) => {
+    const active = activeLink === id;
+    const c = tone === "warn" ? { bg: C.warningTint, fg: C.warning } : { bg: C.brandTint, fg: C.brand };
+    return (
+      <mark ref={el => { docRefs.current[id] = el; }} onClick={() => jumpTo(id)} title="Jump to extracted field →"
+        style={{ background: c.bg, color: c.fg, padding: "1px 5px", borderRadius: 4, fontWeight: 600, cursor: "pointer", boxShadow: active ? `0 0 0 2px ${C.brand}` : "none", scrollMarginTop: 24, transition: "box-shadow .2s" }}>
+        {children}<Link2 size={11} style={{ verticalAlign: "middle", marginLeft: 3, opacity: 0.65 }} />
+      </mark>
+    );
+  };
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }} className="animate-fade-in">
+      {/* Compact header: row 1 = title + actions, row 2 = stepper + view toggle */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
+          <div>
+            <h2 style={T(18, 700)}>Extraction Preview &amp; Audit</h2>
+            <p style={{ ...T(13, 400, C.text2), marginTop: 2 }}>Review AI extracted parameters against the source documents.</p>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <button style={btn("secondary")} onClick={onBack}><ArrowLeft size={15} /> Back</button>
+            <button style={btn("brand")} onClick={onNext}>Proceed to Builder <ArrowRight size={16} /></button>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <StepperPill items={[{ label: "Upload", state: "done" }, { label: "Generate AI", state: "done" }, { label: "Review & Confirm", state: "active", n: 3 }, { label: "Product Builder", state: "todo" }]} />
+          <div style={{ display: "flex", gap: 4, background: C.bgTertiary, padding: 4, borderRadius: C.rLg, width: "max-content", border: `1px solid ${C.border}` }}>
+            {([["split", "Split View", LayoutTemplate], ["files", "Files Uploaded", FileText], ["data", "Data Extracted", FileSearch]] as const).map(([id, label, Icon]) => (
+              <button key={id} onClick={() => setPaneView(id)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: C.rMd, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: paneView === id ? C.card : "transparent", color: paneView === id ? C.brand : C.text2, boxShadow: paneView === id ? C.shadowSm : "none" }}>
+                <Icon size={14} /> {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Active link banner */}
+      {activeLink && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", background: C.brandTint, border: `1px solid rgba(4,120,87,0.2)`, borderRadius: C.rMd, marginBottom: 10 }}>
+          <Link2 size={14} color={C.brand} />
+          <span style={T(12, 700, C.brand)}>Linked: {activeLabel}</span>
+          <span style={T(12, 400, C.text2)}>— highlighted in both source &amp; extracted data</span>
+          <button onClick={() => setActiveLink(null)} style={{ marginLeft: "auto", ...T(12, 600, C.text2), background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><X size={12} /> Clear</button>
+        </div>
+      )}
+
+      <div style={{ flex: 1, display: "flex", gap: paneView === "split" ? 24 : 0, overflow: "hidden" }}>
+        {/* Left doc */}
+        <div style={{ ...card(0), width: paneView === "split" ? "50%" : "100%", display: paneView === "data" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, background: C.bgTertiary, overflowX: "auto" }}>
+            {docTabs.map((t, i) => (
+              <button key={i} onClick={() => setDocTab(i)} style={{ padding: "10px 14px", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", border: "none", borderBottom: `2px solid ${docTab === i ? C.brand : "transparent"}`, background: docTab === i ? C.card : "transparent", color: docTab === i ? C.brand : C.text2, cursor: "pointer" }}>{t}</button>
+            ))}
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: 24, background: C.card }}>
+            <p style={{ ...T(11, 600, C.brand), marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}><Link2 size={12} /> Tip: click a highlighted value to jump to its extracted field</p>
+            <h4 style={{ ...T(15, 700), marginBottom: 16 }}>SECTION 2. PLANS DEFINITION</h4>
+            <p style={{ ...T(13, 400, C.text2, 1.7), marginBottom: 16 }}>The D.I.Y Health Insurance product offers three standard tiers of benefits designed to meet varied customer requirements:</p>
+            <p style={{ ...T(13, 400, C.text, 1.7), marginBottom: 16 }}><strong>2.1 Mini Plan:</strong> Entry-level plan tier. The Sum Insured options available are either <DocMark id="mini-si" tone="brand">Rs. 4,00,000 or Rs. 5,00,000</DocMark>. Floater coverage basis is supported for Self, Spouse/Legal Partner, and dependent Children.</p>
+            <p style={{ ...T(13, 400, C.text, 1.7), marginBottom: 16 }}><strong>2.2 Medi Plan:</strong> Mid-tier plan. Sum Insured ranges from <DocMark id="medi-si" tone="brand">Rs. 6,00,000 up to Rs. 10,00,000</DocMark>. Floater bases extend to cover Parents and Parents-in-law (max 2 + 2 in a single floater contract).</p>
+            <h4 style={{ ...T(15, 700), marginTop: 32, marginBottom: 16 }}>SECTION 4. OUT-PATIENT BENEFITS</h4>
+            <p style={{ ...T(13, 400, C.text, 1.7) }}><strong>4.1 Out-patient (OPD) Treatment:</strong> Provides coverage for medical consultations, diagnostic services, and prescribed medications where hospitalisation is not required. For the Mini Plan option, out-patient (OPD) expenses are capped at an <DocMark id="opd-limit" tone="warn">annual limit of Rs. 3,000</DocMark> per policy. Under the Medi Plan, the limit is Rs. 5,00,000. Under the Max Plan, the limit is Rs. 10,00,000.</p>
+          </div>
+        </div>
+
+        {/* Right extracted */}
+        <div style={{ ...card(0), width: paneView === "split" ? "50%" : "100%", display: paneView === "files" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ padding: 14, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bgTertiary }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 42, height: 42, borderRadius: "50%", border: `4px solid ${C.success}`, display: "flex", alignItems: "center", justifyContent: "center", background: C.successTint }}><span style={T(14, 700, C.success)}>89%</span></div>
+              <div>
+                <h3 style={T(14, 700)}>Extraction Quality: Good</h3>
+                <p style={{ ...T(12, 400, C.text2), marginTop: 2 }}>130 of 145 parameters cleanly extracted</p>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <span style={pill(C.success, C.successTint)}><CheckCircle2 size={12} /> 6 High</span>
+              <span style={pill(C.warning, C.warningTint)}><AlertTriangle size={12} /> 1 Warning</span>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+            {EXTRACT_SECTIONS.map(sec => {
+              const open = openSection === sec.id;
+              const pctColor = sec.pct >= 85 ? C.success : C.warning;
+              return (
+                <div key={sec.id} style={{ border: `1px solid ${open ? C.borderStrong : C.border}`, borderRadius: C.rMd, overflow: "hidden", flexShrink: 0 }}>
+                  <button onClick={() => toggleSection(sec.id)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", background: open ? C.card : C.bgTertiary, border: "none", cursor: "pointer" }}>
+                    <span style={{ ...T(12.5, 600), display: "flex", alignItems: "center", gap: 8 }}>{open ? <ChevronDown size={14} color={C.brand} /> : <ChevronRight size={14} color={C.text3} />} {sec.name}</span>
+                    <span style={T(12, 700, pctColor)}>{sec.pct}%</span>
+                  </button>
+                  {open && (
+                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                      <thead><tr style={{ background: C.bgTertiary, borderBottom: `1px solid ${C.border}`, borderTop: `1px solid ${C.border}` }}>{sec.cols.map(h => <th key={h} style={{ padding: "6px 12px", ...T(10.5, 600, C.text3) }}>{h}</th>)}</tr></thead>
+                      <tbody>
+                        {sec.rows.map((r, i) => {
+                          const cc = r.conf >= 85 ? C.success : C.warning;
+                          const linked = !!r.link;
+                          const active = activeLink === r.link;
+                          return (
+                            <tr key={i}
+                              ref={el => { if (r.link) fieldRefs.current[r.link] = el; }}
+                              onClick={() => r.link && jumpTo(r.link)}
+                              style={{ borderBottom: i < sec.rows.length - 1 ? `1px solid ${C.border}` : "none", cursor: linked ? "pointer" : "default", background: active ? C.brandTint : (r.warn ? C.warningTintSoft : "transparent"), boxShadow: active ? `inset 0 0 0 2px ${C.brand}` : "none", scrollMarginTop: 24, transition: "background .2s" }}>
+                              <td style={{ padding: "7px 12px", verticalAlign: "top", ...T(12, 500, r.warn ? C.warning : C.text2) }}>{r.cells[0]}</td>
+                              <td style={{ padding: "7px 12px" }}>
+                                <div style={T(12, 500)}>{r.cells[1]}</div>
+                                <div style={{ ...T(10, 400, r.warn ? C.warning : C.text3), marginTop: 2, display: "flex", alignItems: "center", gap: 5 }}>
+                                  {r.cells[2]}
+                                  {linked && <span style={{ display: "inline-flex", alignItems: "center", gap: 2, color: C.brand, fontWeight: 600 }}><Link2 size={10} /> view in file</span>}
+                                </div>
+                              </td>
+                              <td style={{ padding: "7px 12px", verticalAlign: "top" }}><span style={{ display: "flex", alignItems: "center", gap: 4, ...T(12, 500, cc) }}>{r.conf >= 85 ? <ShieldCheck size={14} /> : <AlertTriangle size={14} />} {r.conf}%</span></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN 3 — Unified Builder
+// ─────────────────────────────────────────────────────────────────────────────
+const COVERAGES = ["Organ Donor Expenses", "Cumulative Bonus", "Restoration of Sum Insured", "ICU Charges", "Room Rent (Normal Room)", "Wellness Benefits", "Cataract Surgery", "OPD Cover"];
+
+function UnifiedBuilder({ onNext }: { onNext: () => void }) {
+  const [activeNav, setActiveNav] = useState("overview");
+  const [plans, setPlans] = useState({ mini: true, medi: false, max: false });
+  const [tab, setTab] = useState<"tree" | "extraction" | "issues" | "docs">("issues");
+  const [docOpen, setDocOpen] = useState(false);
+  const [warnings, setWarnings] = useState(["OPD Cover (Mini)", "LASIK Surgery (Mini)", "OPD Cover (Medi)", "LASIK Surgery (Medi)", "Maternity Benefit (Mini)", "Road Ambulance (Mini)"]);
+  const isEdit = activeNav.startsWith("coverage-");
+  const covName = activeNav.replace("coverage-", "");
+
+  const navBtn = (active: boolean): React.CSSProperties => ({ width: "100%", textAlign: "left", padding: "6px 12px", borderRadius: C.rMd, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer", background: active ? C.brandTint : "transparent", color: active ? C.brand : C.text2, display: "flex", justifyContent: "space-between", alignItems: "center" });
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }} className="animate-fade-in">
+      {/* stepper + cta */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 16, flexWrap: "wrap" }}>
+        <StepperPill items={[{ label: "Config Product", state: "done" }, { label: "Config Rules", state: "done" }, { label: "Config Rating", state: "done" }, { label: "Issues Resolved", state: "active", n: 4 }, { label: "Product Review", state: "todo" }, { label: "Approved", state: "todo" }, { label: "Published", state: "todo" }]} />
+        <button style={btn("brand")} onClick={onNext}>Proceed to Review <ArrowRight size={16} /></button>
+      </div>
+
+      {/* nudge */}
+      <div style={{ background: C.warningTint, border: `1px solid rgba(245,158,11,0.2)`, borderRadius: C.rMd, padding: 12, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ ...T(13, 500, C.warning), display: "flex", alignItems: "center", gap: 8 }}><AlertCircle size={16} /> Next: Verify extracted fields for OPD Cover · in Mini</span>
+        <button style={{ ...T(11, 700, C.warning), background: C.card, padding: "4px 12px", borderRadius: 6, border: `1px solid rgba(245,158,11,0.3)`, cursor: "pointer" }}>Needs Attention → 30/30</button>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", gap: 16, overflow: "hidden" }}>
+        {/* Col 1 nav */}
+        <div style={{ ...card(0), width: "22%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ padding: 12, borderBottom: `1px solid ${C.border}`, background: C.bgTertiary }}><h3 style={T(13, 700)}>D.I.Y Health Insurance</h3></div>
+          <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
+            <h4 style={{ ...T(10, 700, C.text3), textTransform: "uppercase", letterSpacing: "0.05em", margin: "8px 0 8px 8px" }}>Navigation</h4>
+            <button style={navBtn(activeNav === "overview")} onClick={() => setActiveNav("overview")}>Overview</button>
+            {["Basic Details", "Questions", "Exclusions"].map(x => (
+              <button key={x} style={navBtn(false)}>{x} <CheckCircle2 size={14} color={C.success} /></button>
+            ))}
+            <h4 style={{ ...T(10, 700, C.text3), textTransform: "uppercase", letterSpacing: "0.05em", margin: "12px 0 8px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>Plans <span style={{ color: C.brand, background: C.brandTint, padding: "0 6px", borderRadius: 4, cursor: "pointer" }}>+</span></h4>
+            {/* Mini */}
+            <button style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", border: "none", background: "none", cursor: "pointer", borderRadius: 6, ...T(13, 500) }} onClick={() => setPlans({ ...plans, mini: !plans.mini })}>
+              {plans.mini ? <ChevronDown size={14} /> : <ChevronRight size={14} />}<span style={{ width: 8, height: 8, borderRadius: "50%", background: C.brand }} /> Mini
+            </button>
+            {plans.mini && (
+              <div style={{ paddingLeft: 24, paddingRight: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+                {COVERAGES.map(c => {
+                  const active = activeNav === `coverage-${c}`;
+                  return <button key={c} onClick={() => setActiveNav(`coverage-${c}`)} style={{ width: "100%", textAlign: "left", fontSize: 12, padding: "6px 8px", borderRadius: C.rMd, border: "none", cursor: "pointer", background: active ? C.brand : "transparent", color: active ? "#fff" : C.text2, fontWeight: active ? 500 : 400, boxShadow: active ? C.shadowSm : "none" }}>{c}</button>;
+                })}
+              </div>
+            )}
+            {/* Medi / Max */}
+            <button style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", border: "none", background: "none", cursor: "pointer", borderRadius: 6, ...T(13, 500) }} onClick={() => setPlans({ ...plans, medi: !plans.medi })}>
+              {plans.medi ? <ChevronDown size={14} /> : <ChevronRight size={14} />}<span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3B82F6" }} /> Medi
+            </button>
+            <button style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", border: "none", background: "none", cursor: "pointer", borderRadius: 6, ...T(13, 500) }} onClick={() => setPlans({ ...plans, max: !plans.max })}>
+              {plans.max ? <ChevronDown size={14} /> : <ChevronRight size={14} />}<span style={{ width: 8, height: 8, borderRadius: "50%", background: "#A855F7" }} /> Max
+            </button>
+          </div>
+          <div style={{ padding: 8, borderTop: `1px solid ${C.border}`, background: C.bgTertiary, display: "flex", flexDirection: "column", gap: 4 }}>
+            <button style={{ width: "100%", textAlign: "left", padding: "8px 12px", ...T(12, 600, C.text2), background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}><Settings size={14} /> Manage Rules</button>
+            <button style={{ width: "100%", textAlign: "left", padding: "8px 12px", ...T(12, 600, C.text2), background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}><Activity size={14} /> Manage Rating</button>
+          </div>
+        </div>
+
+        {/* Col 2 canvas */}
+        <div style={{ ...card(0), flex: 1, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+          {!isEdit ? (
+            <div style={{ height: "100%", overflowY: "auto", padding: 24 }} className="animate-fade-in">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <h3 style={T(20, 700)}>Builder Overview</h3>
+                <button style={btn("primary", true)}><CheckCircle2 size={16} /> Mark Reviewed (0/151)</button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+                <div style={{ ...card(16, C.rLg, { background: C.bgTertiary, display: "flex", alignItems: "center", gap: 16 }) }}>
+                  <div style={{ width: 48, height: 48, borderRadius: "50%", border: `4px solid ${C.success}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.success, fontWeight: 700, background: C.successTint, flexShrink: 0 }}>89%</div>
+                  <div><h4 style={T(13, 700)}>145 of 155 fields extracted</h4><p style={{ ...T(12, 400, C.text2), marginTop: 4 }}>0 fields need review · 0 sections flagged</p></div>
+                </div>
+                <div style={{ ...card(16, C.rLg, { background: C.bgTertiary }) }}>
+                  <h4 style={{ ...T(13, 700), marginBottom: 8 }}>Product Summary</h4>
+                  {[["Plans", "3 Variants"], ["Sum Insured", "₹4L – ₹15L"], ["Coverages", "111 Total"]].map(([k, v]) => (
+                    <div key={k} style={{ display: "flex", justifyContent: "space-between", ...T(12, 400, C.text2), marginBottom: 4 }}><span style={{ color: C.text3 }}>{k}</span><span style={T(12, 500)}>{v}</span></div>
+                  ))}
+                </div>
+              </div>
+              <h4 style={{ ...T(13, 700), marginBottom: 12 }}>Plan Variants</h4>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                {["Mini", "Medi", "Max"].map(p => (
+                  <div key={p} style={card(16)}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <h5 style={T(14, 700)}>{p}</h5>
+                      <span style={{ ...T(10, 500, C.text2), background: "#F3F4F6", padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}` }}>Plan</span>
+                    </div>
+                    {[["Plan Limits", "1"], ["Member Details", "6"], ["Premium Raters", "3"], ["Coverages", "37"]].map(([k, v]) => (
+                      <div key={k} style={{ display: "flex", justifyContent: "space-between", ...T(12, 400, C.text2), marginBottom: 8 }}><span>{k}</span><span style={T(12, 500)}>{v}</span></div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ height: "100%", display: "flex", flexDirection: "column" }} className="animate-fade-in">
+              <div style={{ padding: 12, borderBottom: `1px solid ${C.border}`, background: C.bgTertiary, ...T(12, 400, C.text2), display: "flex", alignItems: "center", gap: 8 }}>
+                <span>Eicore</span><span style={{ color: C.text3 }}>/</span><span>Products</span><span style={{ color: C.text3 }}>/</span><span>D.I.Y Health Insurance</span><span style={{ color: C.text3 }}>/</span><span style={T(12, 500)}>Mini</span>
+              </div>
+              <div style={{ padding: 16, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.card, boxShadow: C.shadowSm }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <h3 style={T(18, 700)}>{covName}</h3>
+                  <span style={{ ...T(11, 500, C.text2), background: "#F3F4F6", padding: "2px 8px", borderRadius: 6, border: `1px solid ${C.border}` }}>Coverage</span>
+                  <span onClick={() => setDocOpen(!docOpen)} style={{ ...T(11, 700, C.warning), background: C.warningTint, padding: "4px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 4, border: `1px solid rgba(245,158,11,0.2)`, cursor: "pointer" }}><AlertCircle size={14} /> 75%</span>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button style={{ ...btn("secondary", true), color: C.error }}>Delete</button>
+                  <button style={btn("secondary", true)} onClick={() => setActiveNav("overview")}>Cancel</button>
+                  <button style={btn("brand", true)}>Save</button>
+                </div>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: 24, background: C.bgTertiary }}>
+                <div style={{ ...card(20), maxWidth: 680, margin: "0 auto" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 20 }}>
+                    <Field label="Name" req><input defaultValue={covName} style={inputStyle()} /></Field>
+                    <Field label="Type" req><select style={inputStyle()}><option>BASE</option><option>ADD-ON</option></select></Field>
+                  </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <Field label="Description" req><textarea defaultValue={covName === "OPD Cover" ? "OPD treatment expenses (consultations, diagnostics, prescribed medicines). Under Mini, annual limit Rs. 3,000 per policy year." : "Extracted coverage description will appear here based on the selected coverage."} style={{ ...inputStyle(), height: 80, resize: "none" }} /></Field>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 20 }}>
+                    <div>
+                      <label style={{ ...T(12, 500, C.error), marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}>Data (Range) <AlertCircle size={12} /></label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <input placeholder="0" style={{ ...inputStyle(), border: `1px solid ${C.error}`, background: C.errorTintSoft, color: C.error }} />
+                        <span style={T(12, 400, C.text2)}>to</span>
+                        <input placeholder="0" style={{ ...inputStyle(), border: `1px solid ${C.error}`, background: C.errorTintSoft, color: C.error }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ ...T(12, 500, C.warning), marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>Limit Value <AlertCircle size={12} /></span>
+                        <span onClick={() => setDocOpen(true)} style={{ ...T(10, 600, C.warning), background: C.warningTint, padding: "0 4px", borderRadius: 4, cursor: "pointer" }}>Inspect</span>
+                      </label>
+                      <input defaultValue={covName === "OPD Cover" ? "3000" : "50000"} style={{ ...inputStyle(), border: `1px solid ${C.warning}`, background: C.warningTintSoft }} />
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 20 }}>
+                    <Field label="Limit Type"><select style={inputStyle()}><option>FIXED</option><option>PERCENTAGE</option></select></Field>
+                    <Field label="Limit Applicability"><select style={inputStyle()}><option>POLICY</option><option>CLAIM</option></select></Field>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${C.border}`, borderRadius: C.rMd, padding: 8, background: C.bgTertiary }}>
+                      <label style={T(13, 500)}>Is Required</label>
+                      <div style={{ width: 40, height: 20, background: C.brand, borderRadius: 999, position: "relative" }}><div style={{ width: 16, height: 16, background: "#fff", borderRadius: "50%", position: "absolute", right: 2, top: 2 }} /></div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${C.border}`, borderRadius: C.rMd, padding: 8, background: C.bgTertiary }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}><label style={T(13, 500)}>Member Applicability</label><span style={T(12, 400, C.text2)}>ALL</span></div>
+                      <button style={{ ...T(12, 500, C.brand), background: C.brandTint, padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer" }}>Edit</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {docOpen && (
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: C.card, borderTop: `1px solid ${C.border}`, boxShadow: "0 -10px 40px rgba(0,0,0,0.1)", zIndex: 20, display: "flex", flexDirection: "column", height: "35%" }} className="animate-fade-in">
+                  <div style={{ padding: 8, borderBottom: `1px solid ${C.border}`, background: C.bgTertiary, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ ...T(12, 600, C.text2), display: "flex", alignItems: "center", gap: 8 }}><ExternalLink size={14} /> BRD_DIY_Health.docx — Page 2 Section 4.1</span>
+                    <button onClick={() => setDocOpen(false)} style={{ color: C.text3, background: C.card, border: `1px solid ${C.border}`, borderRadius: 4, padding: 4, cursor: "pointer", display: "flex" }}><X size={14} /></button>
+                  </div>
+                  <div style={{ padding: 16, overflowY: "auto", ...T(13, 400, C.text, 1.7), flex: 1 }}>
+                    <strong>4.1 Out-patient (OPD) Treatment:</strong> Provides coverage for medical consultations, diagnostic services, and prescribed medications where hospitalisation is not required. <mark style={{ background: C.warningTint, border: `1px solid rgba(245,158,11,0.5)`, padding: "0 4px", borderRadius: 3, fontWeight: 500, color: C.warning }}>For the Mini Plan option, out-patient (OPD) expenses are capped at an annual limit of Rs. 3,000 per policy.</mark> Under the Medi Plan, the limit is Rs. 5,00,000. Under the Max Plan, the limit is Rs. 10,00,000.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Col 3 right panel */}
+        <div style={{ ...card(0), width: "30%", display: "flex", flexDirection: "column", overflow: "hidden", flexShrink: 0 }}>
+          <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, background: C.bgTertiary }}>
+            {([{ id: "tree", icon: FolderTree, label: "Tree" }, { id: "extraction", icon: FileSearch, label: "Extraction" }, { id: "issues", icon: AlertTriangle, label: "Issues" }, { id: "docs", icon: BookOpen, label: "Docs" }] as const).map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 4px", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: "none", cursor: "pointer", position: "relative", background: tab === t.id ? C.card : "transparent", color: tab === t.id ? C.brand : C.text3 }}>
+                <t.icon size={16} />
+                <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t.label}</span>
+                {tab === t.id && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: C.brand }} />}
+              </button>
+            ))}
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+            {tab === "issues" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, height: "100%" }} className="animate-fade-in">
+                <div style={{ display: "flex", gap: 12, background: C.bgTertiary, border: `1px solid ${C.border}`, borderRadius: C.rMd, padding: 8 }}>
+                  <span style={{ ...T(12, 700, C.success), display: "flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={14} /> 0 Blockers</span>
+                  <span style={{ ...T(12, 700, C.warning), display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {warnings.length} Warnings</span>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {warnings.map((issue, i) => (
+                    <div key={i} style={{ borderLeft: `4px solid ${C.warning}`, background: C.warningTintSoft, padding: 10, borderTopRightRadius: 6, borderBottomRightRadius: 6, border: `1px solid ${C.border}`, borderLeftColor: C.warning, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <span style={T(12, 600)}>{issue}</span>
+                        <span style={{ ...T(10, 700, C.warning), background: C.warningTint, padding: "1px 4px", borderRadius: 4, textTransform: "uppercase", border: `1px solid rgba(245,158,11,0.2)` }}>75% Conf</span>
+                      </div>
+                      <button onClick={() => setWarnings(w => w.filter((_, j) => j !== i))} style={{ ...T(10, 700, "#fff"), background: C.warning, padding: "4px 8px", borderRadius: 4, border: "none", cursor: "pointer", width: "max-content" }}>Resolve</button>
+                    </div>
+                  ))}
+                  {warnings.length === 0 && <div style={{ textAlign: "center", padding: 20 }}><CheckCircle2 size={28} color={C.success} style={{ margin: "0 auto 8px" }} /><p style={T(13, 500, C.success)}>All warnings resolved</p></div>}
+                </div>
+              </div>
+            )}
+            {tab === "extraction" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }} className="animate-fade-in">
+                <div style={{ display: "flex", justifyContent: "space-between", ...T(12, 600, C.text2), marginBottom: 4 }}><span>Extracted Sections</span><span style={{ color: C.brand, cursor: "pointer" }}>Expand All</span></div>
+                {[["Product Information", "92%"], ["Plans", "92%"], ["Coverage Details", "92%"], ["Member Eligibility", "93%"], ["Benefits & Covers", "89%"], ["Risk Factors", "92%"]].map(([n, p], i) => (
+                  <div key={i} style={{ border: `1px solid ${C.border}`, borderRadius: 6, padding: 8, background: C.bgTertiary, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <span style={{ ...T(12, 500), display: "flex", alignItems: "center", gap: 6 }}><ChevronRight size={12} color={C.text3} /> {n}</span>
+                    <span style={T(10, 700, C.success)}>{p}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {tab === "tree" && (
+              <div style={{ ...T(13, 400), }} className="animate-fade-in">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: 4, border: `1px solid rgba(4,120,87,0.5)`, background: C.brandTintSoft, borderRadius: 6 }}><FolderTree size={16} color={C.brand} /> <strong>D.I.Y Health Insurance</strong></div>
+                <div style={{ paddingLeft: 16, borderLeft: `1px solid ${C.border}`, marginLeft: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}><ChevronDown size={14} color={C.text3} /> <strong>PLANS</strong></div>
+                  <div style={{ paddingLeft: 16, borderLeft: `1px solid ${C.border}`, marginLeft: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}><ChevronDown size={14} color={C.text3} /> <span style={T(13, 500, C.brand)}>Mini</span></div>
+                    <div style={{ paddingLeft: 16, borderLeft: `1px solid ${C.border}`, marginLeft: 8, ...T(13, 400, C.text2) }}>
+                      {["PLAN LIMITS", "MEMBER DETAILS", "COVERAGES"].map(x => <div key={x} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}><ChevronRight size={14} color={C.text3} /> {x}</div>)}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}><ChevronDown size={14} color={C.text3} /> PREMIUM RATERS</div>
+                      <div style={{ paddingLeft: 16, borderLeft: `1px solid ${C.border}`, marginLeft: 8 }}>
+                        {["Age (Missing)", "Family Construct", "Pre-existing"].map(x => <div key={x} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", ...T(13, 400, C.error) }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: C.error }} /> {x}</div>)}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}><ChevronRight size={14} color={C.text3} /> <strong>Medi</strong></div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}><ChevronRight size={14} color={C.text3} /> <strong>Max</strong></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {tab === "docs" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }} className="animate-fade-in">
+                <div style={T(12, 600, C.text2)}>Source Documents</div>
+                {[{ n: "BRD_DIY_Health_Ver0.11.docx", s: "5.4 MB", x: false }, { n: "D.I.Y Health policy wording.docx", s: "587.9 KB", x: false }, { n: "DIY Proposal Form.docx", s: "113.8 KB", x: false }, { n: "DIY Rates.xlsx", s: "28.0 KB", x: true }].map((d, i) => (
+                  <div key={i} style={{ border: `1px solid ${C.border}`, borderRadius: 6, padding: 10, background: C.bgTertiary, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      {d.x ? <FileSpreadsheet size={16} color={C.brandSecondary} style={{ marginTop: 2 }} /> : <FileType size={16} color={C.blue} style={{ marginTop: 2 }} />}
+                      <div style={{ display: "flex", flexDirection: "column" }}><span style={{ ...T(12, 500), lineHeight: 1.3 }}>{d.n}</span><span style={{ ...T(10, 400, C.text3), marginTop: 2 }}>{d.s}</span></div>
+                    </div>
+                    <button style={{ ...T(10, 700, C.brand), border: `1px solid rgba(4,120,87,0.3)`, background: C.card, padding: "4px 0", borderRadius: 4, width: "100%", cursor: "pointer" }}>View Document</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, req, children }: { label: string; req?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={{ ...T(12, 500), marginBottom: 4, display: "block" }}>{label} {req && <span style={{ color: C.error }}>*</span>}</label>
+      {children}
+    </div>
+  );
+}
+function inputStyle(): React.CSSProperties {
+  return { width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: C.rMd, color: C.text, padding: "10px 14px", fontSize: 13, outline: "none", boxSizing: "border-box" };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN 4 — Pre-Publish Review
+// ─────────────────────────────────────────────────────────────────────────────
+function PrePublishReview({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const checklist = [
+    { t: "Configure hospitalisation sub-limit rules", k: "blocker" },
+    { t: "Set Min/Max coverage limits for Hospitalisation", k: "blocker" },
+    { t: "Verify maternity benefit amounts (64% confidence)", k: "warning" },
+    { t: "Verify family construct default value", k: "warning" },
+    { t: "Mark all 10 sections as Reviewed", k: "warning" },
+  ];
+  return (
+    <div style={{ height: "100%", maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column" }} className="animate-fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button style={btn("secondary", true)} onClick={onBack}><ArrowLeft size={14} /> Back</button>
+          <h2 style={{ ...T(20, 700), marginLeft: 8 }}>Product Review — D.I.Y Health Insurance · Mini Plan</h2>
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button style={btn("secondary")}>Configure Rules</button>
+          <button style={btn("brand")} onClick={onNext}>Submit for Approval →</button>
+        </div>
+      </div>
+
+      <div style={{ background: C.errorTintSoft, border: `1px solid rgba(239,68,68,0.2)`, borderRadius: C.rLg, padding: 16, marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 16, boxShadow: C.shadowSm }}>
+        <AlertTriangle size={20} color={C.error} style={{ marginTop: 2 }} />
+        <div><h3 style={T(14, 700, C.error)}>⊙ Not ready to publish</h3><p style={{ ...T(12, 400, C.text2), marginTop: 4 }}>2 blocking errors and 3 unreviewed sections must be resolved before submission.</p></div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24, flex: 1, overflow: "hidden", paddingBottom: 8 }}>
+        {/* Left */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24, overflowY: "auto", paddingRight: 8 }}>
+          <div style={card(20)}>
+            <h3 style={{ ...T(14, 700), marginBottom: 16 }}>Publishing Checklist</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {checklist.map((c, i) => {
+                const blk = c.k === "blocker";
+                const col = blk ? C.error : C.warning;
+                const bg = blk ? C.errorTintSoft : C.warningTintSoft;
+                const bd = blk ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)";
+                return (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, borderRadius: 6, border: `1px solid ${bd}`, background: bg }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", background: col, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700 }}>{blk ? "!" : "?"}</div>
+                      <span style={T(12, 500)}>{c.t}</span>
+                    </div>
+                    <StatusTag label={blk ? "Blocker" : "Warning"} kind={blk ? "error" : "warning"} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={card(20)}>
+            <h3 style={{ ...T(14, 700), marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>Plan Configuration <span style={{ ...T(12, 400, C.success), display: "flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={14} /> Complete</span></h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {[["Plan name", "Mini Plan"], ["Plan code", "MIN-001"], ["Sum insured options", "₹4L, ₹5L"]].map(([k, v]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", ...T(12, 400, C.text2) }}><span>{k}</span><span style={{ ...T(12, 500), display: "flex", alignItems: "center", gap: 6 }}>{v} <CheckCircle2 size={14} color={C.success} /></span></div>
+              ))}
+            </div>
+          </div>
+
+          <div style={card(20)}>
+            <h3 style={{ ...T(14, 700), marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>Coverage Configuration <span style={{ ...T(12, 400, C.error), display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> 2 Blockers</span></h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, ...T(12, 400) }}>
+              {[["Hospitalisation room rent", "Normal Room", false], ["Hospitalisation sub-limits", "Not configured", true], ["Hospitalisation min/max", "Not set", true], ["Day care procedures", "Standard 540+", false], ["Pre-hosp days", "60 days", false]].map(([k, v, err]) => (
+                <div key={k as string} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 8, borderBottom: `1px solid ${C.border}`, ...(err ? { background: C.errorTintSoft, padding: 8, borderRadius: 6, marginInline: -8 } : {}) }}>
+                  <span style={T(12, err ? 500 : 400, err ? C.error : C.text2)}>{k}</span>
+                  <span style={{ ...T(12, err ? 700 : 500, err ? C.error : C.text), display: "flex", alignItems: "center", gap: 6 }}>{v} {err ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} color={C.success} />}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", paddingRight: 8 }}>
+          <SummaryCard title="Rules Configuration" rows={[
+            { l: "Room rent sub-limit rule — not configured", kind: "error" }, { l: "Entry age rule active", kind: "ok" }, { l: "PED waiting period rule active", kind: "ok" }, { l: "Maternity waiting period rule active", kind: "ok" }, { l: "Cosmetic & dental exclusion", kind: "ok" },
+          ]} />
+          <div style={card(20)}>
+            <h3 style={{ ...T(12, 700, C.text2), textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Field Confidence</h3>
+            {[["Network & hospitals", "88% Good", C.success], ["Coverage limits", "Review", C.warning], ["Terms & conditions", "38% Poor", C.error], ["Grace period", "Missing", C.error]].map(([k, v, col]) => (
+              <div key={k as string} style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, ...T(12, 400, C.text2) }}><span>{k}</span><span style={T(12, 600, col as string)}>{v}</span></div>
+            ))}
+          </div>
+          <div style={card(20)}>
+            <h3 style={{ ...T(12, 700, C.text2), textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Members &amp; Raters</h3>
+            {[["Self entry age", "18–65", true], ["Age rater", "Age band", true], ["PED waiting", "2 years", true], ["Family construct", "Review", false]].map(([k, v, ok]) => (
+              <div key={k as string} style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, ...T(12, 400, C.text2) }}><span>{k}</span>{ok ? <span style={{ ...T(12, 500), display: "flex", alignItems: "center", gap: 4 }}>{v} <CheckCircle2 size={12} color={C.success} /></span> : <span style={T(12, 600, C.warning)}>{v}</span>}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryCard({ title, rows }: { title: string; rows: { l: string; kind: "ok" | "error" }[] }) {
+  return (
+    <div style={card(20)}>
+      <h3 style={{ ...T(12, 700, C.text2), textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>{title}</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, ...T(12, r.kind === "error" ? 500 : 400, r.kind === "error" ? C.error : C.text) }}>
+            {r.kind === "ok" ? <CheckCircle2 size={14} color={C.success} /> : <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.error }} />}
+            {r.l}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN 5 — Stakeholder Dashboard
+// ─────────────────────────────────────────────────────────────────────────────
+const PLAN_DATA: Record<string, { limits: [string, string][]; min: string; max: string; opts: string }> = {
+  mini: { min: "₹4,00,000", max: "₹5,00,000", opts: "₹4L, ₹5L", limits: [] },
+  medi: { min: "₹6,00,000", max: "₹10,00,000", opts: "₹6L, ₹8L, ₹10L", limits: [] },
+  max: { min: "₹11,00,000", max: "₹15,00,000", opts: "₹11L, ₹15L", limits: [] },
+};
+
+function StakeholderDashboard({ onBack }: { onBack: () => void }) {
+  const [tab, setTab] = useState<"mini" | "medi" | "max">("mini");
+  const d = PLAN_DATA[tab];
+  const limits: [string, string][] = [["Sum insured type", "Range"], ["Minimum sum insured", d.min], ["Maximum sum insured", d.max], ["Available options", d.opts], ["Floater basis", "Family floater"]];
+  const members: [string, string, string, boolean][] = [["Self", "Mandatory", "18–65 yrs", true], ["Spouse", "Optional", "18–65 yrs", true], ["Children", "Optional", "91 days–25 yrs", true], ["Parents", "Optional", "Up to 70 yrs", false]];
+  const cards = [
+    { icon: Shield, label: "Sum Insured Range", value: "₹4L – ₹15L", sub: "Across Mini / Medi / Max plans", top: C.brand },
+    { icon: Calendar, label: "Effective Live Date", value: "01 Apr 2024", sub: "Live status: Draft", top: C.accent },
+    { icon: Users, label: "Members Covered", value: "4 Member Types", sub: "Self · Spouse · Kids · Parents", top: C.brandSecondary },
+    { icon: Activity, label: "Total Coverages", value: "111 Configured", sub: "37 benefits per plan", top: C.success },
+  ];
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }} className="animate-fade-in">
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: `1px solid ${C.border}`, paddingBottom: 16 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <button onClick={onBack} style={{ ...T(14, 500, C.text2), background: "none", border: "none", cursor: "pointer" }}>← Back</button>
+            <span style={{ color: C.text3 }}>|</span>
+            <h2 style={T(20, 700)}>Product Overview — D.I.Y Health Insurance</h2>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <StatusTag label="Health Insurance" kind="neutral" />
+            <StatusTag label="In Progress" kind="brand" />
+          </div>
+        </div>
+        <button style={btn("secondary")} onClick={onBack}>Back to Review</button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
+        {cards.map((c, i) => (
+          <div key={i} style={{ ...card(20), borderTop: `4px solid ${c.top}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, color: C.text2 }}><c.icon size={18} /><span style={T(14, 500, C.text2)}>{c.label}</span></div>
+            <div style={{ ...T(24, 700), marginBottom: 4 }}>{c.value}</div>
+            <div style={T(12, 400, C.text3)}>{c.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ ...card(24), flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: 4, background: C.bgTertiary, padding: 4, borderRadius: C.rLg, width: "max-content", marginBottom: 24, border: `1px solid ${C.border}` }}>
+          {(["mini", "medi", "max"] as const).map(p => (
+            <button key={p} onClick={() => setTab(p)} style={{ padding: "8px 16px", fontWeight: 500, fontSize: 14, borderRadius: C.rMd, border: "none", cursor: "pointer", background: tab === p ? C.card : "transparent", color: tab === p ? C.brand : C.text2, boxShadow: tab === p ? C.shadowSm : "none", textTransform: "capitalize" }}>{p} Plan</button>
+          ))}
+        </div>
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div>
+              <h4 style={{ ...T(15, 700), marginBottom: 16 }}>Plan Limits Configuration</h4>
+              <div style={{ border: `1px solid ${C.border}`, borderRadius: C.rLg, overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                  <thead style={{ background: C.bgTertiary }}><tr style={{ borderBottom: `1px solid ${C.border}` }}>{["Parameter", "Value", "Status"].map(h => <th key={h} style={{ padding: 12, ...T(11, 600, C.text2), letterSpacing: "0.03em" }}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {limits.map(([k, v], i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <td style={{ padding: 12, ...T(12, 500) }}>{k}</td>
+                        <td style={{ padding: 12, ...T(12, 400, C.text2) }}>{v}</td>
+                        <td style={{ padding: 12 }}><CheckCircle2 size={16} color={C.success} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <h4 style={{ ...T(15, 700), marginBottom: 16 }}>Member Details</h4>
+              <div style={{ border: `1px solid ${C.border}`, borderRadius: C.rLg, overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                  <thead style={{ background: C.bgTertiary }}><tr style={{ borderBottom: `1px solid ${C.border}` }}>{["Member", "Applicability", "Entry Age", "Status"].map(h => <th key={h} style={{ padding: 12, ...T(11, 600, C.text2), letterSpacing: "0.03em" }}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {members.map(([m, a, e, ok], i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, background: ok ? "transparent" : C.warningTintSoft }}>
+                        <td style={{ padding: 12, ...T(12, 500, ok ? C.text : C.warning) }}>{m}</td>
+                        <td style={{ padding: 12, ...T(12, 400, ok ? C.text2 : C.text) }}>{a}</td>
+                        <td style={{ padding: 12, ...T(12, 400, ok ? C.text2 : C.text) }}>{e}</td>
+                        <td style={{ padding: 12 }}>{ok ? <CheckCircle2 size={16} color={C.success} /> : <StatusTag label="Review" kind="warning" />}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App shell
+// ─────────────────────────────────────────────────────────────────────────────
+export default function EicoreApp() {
+  const [view, setView] = useState<"prototype" | "case-study">("prototype");
+  const [step, setStep] = useState(1);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") { e.preventDefault(); setSidebarCollapsed(c => !c); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden", background: C.shell }}>
+      <GlobalSidebar />
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100vh", overflow: "hidden", padding: "16px 20px" }}>
+        <Header view={view} setView={setView} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", background: C.card, borderRadius: "0 0 12px 12px", boxShadow: C.shadowMd, border: `1px solid ${C.border}`, borderTop: "none" }}>
+          {view === "prototype" ? (
+            <>
+              <StepSidebar currentStep={step} setCurrentStep={setStep} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
+              <main style={{ flex: 1, overflowY: "auto", padding: "24px 32px", background: C.bgTertiary }}>
+                {step === 1 && <MethodSelection onNext={() => setStep(2)} />}
+                {step === 2 && <ExtractionPreview onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+                {step === 3 && <UnifiedBuilder onNext={() => setStep(4)} />}
+                {step === 4 && <PrePublishReview onNext={() => setStep(5)} onBack={() => setStep(3)} />}
+                {step === 5 && <StakeholderDashboard onBack={() => setStep(4)} />}
+              </main>
+            </>
+          ) : (
+            <main style={{ flex: 1, overflowY: "auto", background: C.card, borderRadius: "0 0 12px 12px" }}>
+              <CaseStudy onOpenPrototype={() => setView("prototype")} />
+            </main>
+          )}
+        </div>
+      </div>
+      <CommentsLayer context={view === "prototype" ? `prototype:${step}` : "case-study"} />
+    </div>
+  );
+}
