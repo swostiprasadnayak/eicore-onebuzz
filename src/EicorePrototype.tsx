@@ -9,6 +9,7 @@ import {
 import { C, T, card, pill, btn } from "./theme";
 import CaseStudy from "./CaseStudy";
 import CommentsLayer from "./CommentsLayer";
+import TreeExpansion from "./TreeExpansion";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared bits
@@ -574,7 +575,7 @@ function ExtractionPreview({ onNext, onBack }: { onNext: () => void; onBack: () 
 // ─────────────────────────────────────────────────────────────────────────────
 const COVERAGES = ["Organ Donor Expenses", "Cumulative Bonus", "Restoration of Sum Insured", "ICU Charges", "Room Rent (Normal Room)", "Wellness Benefits", "Cataract Surgery", "OPD Cover"];
 
-function UnifiedBuilder({ onNext }: { onNext: () => void }) {
+function UnifiedBuilder({ onNext, onOpenTree }: { onNext: () => void; onOpenTree: () => void }) {
   const [activeNav, setActiveNav] = useState("overview");
   const [plans, setPlans] = useState({ mini: true, medi: false, max: false });
   const [tab, setTab] = useState<"tree" | "extraction" | "issues" | "docs">("issues");
@@ -590,7 +591,15 @@ function UnifiedBuilder({ onNext }: { onNext: () => void }) {
       {/* stepper + cta */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 16, flexWrap: "wrap" }}>
         <StepperPill items={[{ label: "Config Product", state: "done" }, { label: "Config Rules", state: "done" }, { label: "Config Rating", state: "done" }, { label: "Issues Resolved", state: "active", n: 4 }, { label: "Product Review", state: "todo" }, { label: "Approved", state: "todo" }, { label: "Published", state: "todo" }]} />
-        <button className="btn btn-brand btn-lg" onClick={onNext}>Proceed to Review <ArrowRight size={16} /></button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onOpenTree}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", border: `1px solid ${C.brand}`, borderRadius: C.rMd, background: C.brandTint, color: C.brand, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+            title="Open the full Tree workspace"
+          >
+            <FolderTree size={15} /> Open Tree View
+          </button>
+          <button className="btn btn-brand btn-lg" onClick={onNext}>Proceed to Review <ArrowRight size={16} /></button>
+        </div>
       </div>
 
       {/* nudge */}
@@ -1059,6 +1068,7 @@ export default function EicoreApp() {
   const [view, setView] = useState<"prototype" | "case-study">("prototype");
   const [step, setStep] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [treeOpen, setTreeOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1080,7 +1090,7 @@ export default function EicoreApp() {
               <main style={{ flex: 1, overflowY: "auto", padding: "24px 32px", background: C.bgTertiary }}>
                 {step === 1 && <MethodSelection onNext={() => setStep(2)} />}
                 {step === 2 && <ExtractionPreview onNext={() => setStep(3)} onBack={() => setStep(1)} />}
-                {step === 3 && <UnifiedBuilder onNext={() => setStep(4)} />}
+                {step === 3 && <UnifiedBuilder onNext={() => setStep(4)} onOpenTree={() => setTreeOpen(true)} />}
                 {step === 4 && <PrePublishReview onNext={() => setStep(5)} onBack={() => setStep(3)} />}
                 {step === 5 && <StakeholderDashboard onBack={() => setStep(4)} />}
               </main>
@@ -1093,6 +1103,13 @@ export default function EicoreApp() {
         </div>
       </div>
       <CommentsLayer context={view === "prototype" ? `prototype:${step}` : "case-study"} />
+
+      {/* Full-screen Tree Expansion overlay (opens from Builder · Screen 3) */}
+      {treeOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.shell }}>
+          <TreeExpansion onClose={() => setTreeOpen(false)} />
+        </div>
+      )}
     </div>
   );
 }

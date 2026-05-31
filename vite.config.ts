@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin, type Connect } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -114,7 +115,7 @@ function commentsApi(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), commentsApi()],
+  plugins: [react(), tailwindcss(), commentsApi()],
   server: {
     port: 5180,
     open: true,
