@@ -1090,7 +1090,10 @@ export default function EicoreApp() {
               <main style={{ flex: 1, overflowY: "auto", padding: "24px 32px", background: C.bgTertiary }}>
                 {step === 1 && <MethodSelection onNext={() => setStep(2)} />}
                 {step === 2 && <ExtractionPreview onNext={() => setStep(3)} onBack={() => setStep(1)} />}
-                {step === 3 && <UnifiedBuilder onNext={() => setStep(4)} onOpenTree={() => setTreeOpen(true)} />}
+                {step === 3 && (treeOpen
+                  ? <TreeExpansion onClose={() => setTreeOpen(false)} />
+                  : <UnifiedBuilder onNext={() => setStep(4)} onOpenTree={() => setTreeOpen(true)} />
+                )}
                 {step === 4 && <PrePublishReview onNext={() => setStep(5)} onBack={() => setStep(3)} />}
                 {step === 5 && <StakeholderDashboard onBack={() => setStep(4)} />}
               </main>
@@ -1103,13 +1106,6 @@ export default function EicoreApp() {
         </div>
       </div>
       <CommentsLayer context={view === "prototype" ? `prototype:${step}` : "case-study"} />
-
-      {/* Full-screen Tree Expansion overlay (opens from Builder · Screen 3) */}
-      {treeOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: C.shell }}>
-          <TreeExpansion onClose={() => setTreeOpen(false)} />
-        </div>
-      )}
     </div>
   );
 }

@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>End-to-End Journey Audit · Eicore OneBuzz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF6;
+    --surface: #FFFFFF;
+    --ink-1: #0B1220;
+    --ink-2: #475569;
+    --ink-3: #94A3B8;
+    --line: #E5E7EB;
+    --line-strong: #D1D5DB;
+    --brand: #047857;
+    --brand-tint: #ECFDF5;
+    --critical: #DC2626;
+    --critical-tint: #FEE2E2;
+    --warning: #D97706;
+    --warning-tint: #FEF3C7;
+    --info: #2563EB;
+    --info-tint: #DBEAFE;
+    --indigo: #6366F1;
+    --indigo-tint: #EEF2FF;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow-md: 0 4px 18px -2px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+    --shadow-lg: 0 12px 40px -8px rgba(15,23,42,.12), 0 2px 4px rgba(15,23,42,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink-1);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+  h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.018em; margin: 0; line-height: 1.18; }
+  h1 { font-size: 48px; letter-spacing: -0.025em; }
+  h2 { font-size: 30px; }
+  h3 { font-size: 22px; }
+  h4 { font-size: 15px; font-weight: 600; }
+  p { margin: 0; color: var(--ink-2); }
+  .italic { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--brand); text-transform: uppercase; }
+
+  /* ─── Hero ─── */
+  .hero { padding: 96px 0 64px; border-bottom: 1px solid var(--line); }
+  .hero .eyebrow { margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .hero .eyebrow::before { content: ""; width: 32px; height: 2px; background: var(--brand); }
+  .hero h1 { max-width: 940px; }
+  .hero .sub { margin-top: 18px; font-size: 18px; line-height: 1.65; max-width: 820px; }
+  .meta-row { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .meta-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: #fff; border: 1px solid var(--line); color: var(--ink-2); }
+  .meta-chip strong { color: var(--ink-1); font-weight: 600; }
+  .stat-strip { margin-top: 48px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px; }
+  .stat-num { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .stat-num.crit { color: var(--critical); }
+  .stat-num.warn { color: var(--warning); }
+  .stat-num.brand { color: var(--brand); }
+  .stat-num.indigo { color: var(--indigo); }
+  .stat-label { margin-top: 10px; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+  /* ─── Section ─── */
+  section { padding: 80px 0; border-bottom: 1px solid var(--line); }
+  .section-head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 44px; }
+  .section-head .italic { color: var(--ink-2); font-size: 17px; max-width: 760px; }
+
+  /* ─── Journey strip ─── */
+  .journey-flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: stretch; position: relative; }
+  .jf-step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
+  .jf-num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; color: var(--brand); line-height: 1; }
+  .jf-thumb { background: linear-gradient(135deg, #F1F5F9, #E2E8F0); height: 70px; border-radius: 8px; border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .jf-thumb::after { content: ""; position: absolute; inset: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 0 rgba(0,0,0,0.04); }
+  .jf-name { font-size: 13px; font-weight: 600; color: var(--ink-1); }
+  .jf-desc { font-size: 11.5px; color: var(--ink-2); line-height: 1.4; }
+  .jf-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--critical-tint); color: var(--critical); letter-spacing: 0.05em; }
+  .jf-tag.warn { background: var(--warning-tint); color: var(--warning); }
+  .jf-tag.brand { background: var(--brand-tint); color: var(--brand); }
+
+  /* ─── Screen audit block ─── */
+  .audit-block { margin-top: 40px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 36px; box-shadow: var(--shadow-md); }
+  .audit-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; }
+  .audit-head .num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 38px; color: var(--brand); line-height: 1; }
+  .audit-head h3 { font-size: 24px; }
+  .audit-sub { color: var(--ink-2); font-size: 14.5px; margin-bottom: 28px; max-width: 800px; }
+
+  .audit-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 32px; align-items: start; }
+  .schematic-wrap { background: #E5E7EB; border: 1px solid var(--line-strong); border-radius: 14px; padding: 12px; position: relative; box-shadow: var(--shadow-md); }
+  .schematic { background: #fff; border-radius: 10px; padding: 14px; min-height: 360px; position: relative; }
+
+  /* Schematic primitives */
+  .sk-row { display: flex; gap: 8px; align-items: center; }
+  .sk-bar { height: 8px; background: #F1F5F9; border-radius: 3px; }
+  .sk-bar.fill { background: var(--ink-3); }
+  .sk-bar.brand { background: var(--brand); }
+  .sk-bar.dark { background: var(--ink-1); }
+  .sk-bar.warn { background: var(--warning); }
+  .sk-bar.crit { background: var(--critical); }
+  .sk-bar.indigo { background: var(--indigo); }
+  .sk-box { background: #F8FAFC; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 9.5px; color: var(--ink-2); }
+  .sk-box.tint-warn { background: var(--warning-tint); border-color: #FDE68A; color: #92400E; }
+  .sk-box.tint-crit { background: var(--critical-tint); border-color: #FCA5A5; color: #991B1B; }
+  .sk-box.tint-brand { background: var(--brand-tint); border-color: #BBF7D0; color: var(--brand); }
+  .sk-box.tint-indigo { background: var(--indigo-tint); border-color: #C7D2FE; color: var(--indigo); }
+  .sk-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 9px; font-weight: 600; }
+  .sk-pill.brand { background: var(--brand-tint); color: var(--brand); }
+  .sk-pill.warn { background: var(--warning-tint); color: var(--warning); }
+  .sk-pill.crit { background: var(--critical-tint); color: var(--critical); }
+  .sk-pill.indigo { background: var(--indigo-tint); color: var(--indigo); }
+  .sk-pill.muted { background: #F1F5F9; color: var(--ink-2); }
+  .sk-circle { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; }
+  .sk-circle.brand { background: var(--brand); color: #fff; }
+  .sk-circle.ring-success { border: 3px solid var(--brand); color: var(--brand); font-size: 11px; }
+
+  /* Pins */
+  .pin { position: absolute; width: 24px; height: 24px; background: var(--critical); color: #fff; border: 2.5px solid #fff; border-radius: 50% 50% 50% 4px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(220,38,38,.45); z-index: 5; cursor: help; transform: translate(-50%, -100%); transition: transform .15s; }
+  .pin:hover { transform: translate(-50%, -100%) scale(1.15); }
+  .pin.amber { background: var(--warning); box-shadow: 0 3px 10px rgba(217,119,6,.45); }
+  .pin.indigo { background: var(--indigo); box-shadow: 0 3px 10px rgba(99,102,241,.45); }
+
+  /* Legend */
+  .legend { display: flex; flex-direction: column; gap: 12px; }
+  .legend-item { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; }
+  .legend-num { flex-shrink: 0; width: 24px; height: 24px; background: var(--critical); color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .legend-item.amber .legend-num { background: var(--warning); }
+  .legend-item.indigo .legend-num { background: var(--indigo); }
+  .legend-body h4 { font-size: 13.5px; margin-bottom: 4px; }
+  .legend-body p { font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+  .h-tag { display: inline-block; background: #fff; color: var(--brand); padding: 1px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 6px; border: 1px solid var(--line); }
+  .h-tag.missing { color: var(--critical); border-color: var(--critical-tint); }
+
+  .fix-row { margin-top: 24px; background: var(--brand-tint); border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: start; }
+  .fix-row .lab { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); white-space: nowrap; padding-top: 1px; }
+  .fix-row p { font-size: 13.5px; color: #064E3B; line-height: 1.55; }
+
+  /* ─── Cross-cutting themes ─── */
+  .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .theme { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; position: relative; }
+  .theme-num { position: absolute; top: 16px; right: 18px; font-family: 'Playfair Display', serif; font-style: italic; font-size: 36px; font-weight: 600; color: #F1F5F9; line-height: 1; }
+  .theme h4 { font-size: 16px; margin-bottom: 8px; max-width: 360px; }
+  .theme p { font-size: 13.5px; line-height: 1.55; }
+  .theme .scope { margin-top: 12px; font-size: 11.5px; color: var(--ink-3); font-style: italic; }
+  .theme .scope strong { color: var(--ink-2); font-weight: 600; font-style: normal; }
+
+  /* ─── Recommendations ─── */
+  .reco { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 32px; margin-bottom: 16px; }
+  .reco-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .reco-num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 40px; color: var(--brand); line-height: 1; }
+  .reco-head h3 { font-size: 22px; }
+  .reco p { font-size: 14.5px; color: var(--ink-2); line-height: 1.65; margin-bottom: 12px; }
+  .reco-screens { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .reco-screen-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--brand-tint); color: var(--brand); }
+
+  footer { padding: 64px 0 88px; text-align: center; color: var(--ink-3); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">UX Research · End-to-End Journey Audit · Eicore OneBuzz</div>
+    <h1>Six screens, one product. Where the journey breaks down.</h1>
+    <p class="sub">A complete heuristic audit of Priya's path from <strong>Upload &amp; Extract</strong> through <strong>Product Review</strong>. Each screen is broken down into its key UX problems, then the cross-cutting patterns are synthesised into a unified redesign manifesto. All findings cross-referenced against the actuaria-insight Lovable reference and your five "Project Research Overview" Figma variations.</p>
+    <div class="meta-row">
+      <span class="meta-chip">📅 <strong>30 May 2026</strong></span>
+      <span class="meta-chip">🔍 <strong>Nielsen + B2B SaaS heuristics</strong></span>
+      <span class="meta-chip">👤 Persona <strong>Priya · Sr. Actuarial Analyst</strong></span>
+      <span class="meta-chip">🎯 Scope <strong>Full journey: 6 screens</strong></span>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-num crit">28</div>
+        <div class="stat-label">Distinct heuristic violations identified across the journey</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num warn">5</div>
+        <div class="stat-label">Cross-cutting themes recur on 3+ screens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num indigo">~3h</div>
+        <div class="stat-label">Realistic time-to-complete vs the 60-minute design target</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num brand">7</div>
+        <div class="stat-label">Unified recommendations to compress the journey by 2×</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 1 — Journey Map
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">01 — The full journey</span>
+      <h2>From document upload to "ready to publish".</h2>
+      <p class="italic">Six screens, every screen its own bottleneck. The colour-coded chip on each card shows the screen's most severe failure mode.</p>
+    </div>
+
+    <div class="journey-flow">
+      <div class="jf-step">
+        <div class="jf-num">01</div>
+        <div class="jf-thumb"></div>
+        <div class="jf-name">Product Config</div>
+        <div class="jf-desc">User picks Generate via AI / Template / Manual. Uploads BRD + supporting docs.</div>
+        <span class="jf-tag warn">Hierarchy unclear</span>
+      </div>
+      <div class="jf-step">
+        <div class="jf-num">02</div>
+        <div class="jf-thumb"></div>
+        <div class="jf-name">AI Extraction Preview</div>
+        <div class="jf-desc">Reviews the 89% confidence score, extractor notes, and 8 collapsed sections.</div>
+        <span class="jf-tag warn">Numbers don't reconcile</span>
+      </div>
+      <div class="jf-step">
+        <div class="jf-num">03</div>
+        <div class="jf-thumb"></div>
+        <div class="jf-name">Plans Expanded</div>
+        <div class="jf-desc">Expands a section to see Mini/Medi/Max specs. Verifies values against source.</div>
+        <span class="jf-tag">No cross-plan diff</span>
+      </div>
+      <div class="jf-step">
+        <div class="jf-num">04</div>
+        <div class="jf-thumb"></div>
+        <div class="jf-name">Product Builder</div>
+        <div class="jf-desc">Lands in the workspace. Sees stats, plan cards, and the right-panel tree.</div>
+        <span class="jf-tag">Triple-tree redundancy</span>
+      </div>
+      <div class="jf-step">
+        <div class="jf-num">05</div>
+        <div class="jf-thumb"></div>
+        <div class="jf-name">Builder · Mini Tree</div>
+        <div class="jf-desc">Expands Mini → sees red Premium Raters: Age, Family Construct, Pre-existing.</div>
+        <span class="jf-tag">Errors lack context</span>
+      </div>
+      <div class="jf-step">
+        <div class="jf-num">06</div>
+        <div class="jf-thumb"></div>
+        <div class="jf-name">Product Review</div>
+        <div class="jf-desc">Pre-publish checklist surfaces blockers/warnings before approval.</div>
+        <span class="jf-tag">Post-hoc shock</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1 — Product Config
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="audit-block">
+      <div class="audit-head">
+        <div class="num">01</div>
+        <h3>Product Config — Generate via AI</h3>
+      </div>
+      <p class="audit-sub">Three-card entry: Generate via AI (with drag/drop), Select from Template (coming soon), Manual Configure. User uploads 5 documents, sees "Pending" state, hits "Upload &amp; Extract".</p>
+
+      <div class="audit-grid">
+        <div class="schematic-wrap">
+          <div class="schematic" style="min-height:380px;">
+            <!-- Top bar -->
+            <div class="sk-row" style="margin-bottom:14px;">
+              <div class="sk-bar" style="width:60px; height:6px;"></div>
+              <div style="font-size:9.5px; color:var(--indigo); font-weight:600;">Eicore / Products / <span style="color:var(--indigo);">Product Config</span></div>
+              <div style="margin-left:auto; display:flex; gap:6px;">
+                <div class="sk-bar" style="width:14px; height:14px; border-radius:50%; background:#F1F5F9; position:relative;"></div>
+                <div class="sk-circle brand" style="width:18px; height:18px; font-size:8px;">AU</div>
+              </div>
+            </div>
+            <!-- 3 cards -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+              <!-- Generate via AI -->
+              <div style="background:#F1F5F9; border-radius:8px; padding:10px; min-height:280px; border:1px solid #C7D2FE; position:relative; overflow:hidden;">
+                <div style="position:absolute; top:-15px; right:-15px; width:60px; height:60px; border-radius:50%; background:var(--indigo-tint);"></div>
+                <div style="position:absolute; top:30px; right:-10px; width:40px; height:40px; border-radius:50%; background:var(--brand-tint); opacity:.5;"></div>
+                <div class="sk-circle" style="background:var(--indigo-tint); color:var(--indigo); width:22px; height:22px; font-size:11px; margin-bottom:6px;">✦</div>
+                <div style="font-size:9.5px; font-weight:700; margin-bottom:3px;">Generate via AI</div>
+                <div style="font-size:8px; color:var(--ink-2); line-height:1.4; margin-bottom:6px;">Upload a document. AI auto-generates your config.</div>
+                <!-- File list -->
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div class="sk-box" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>📄 01. BRD_DIY...</span><span class="sk-pill muted" style="font-size:7px;">Pending</span></div>
+                  <div class="sk-box" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>📄 D.I.Y Health...</span><span class="sk-pill muted" style="font-size:7px;">Pending</span></div>
+                  <div class="sk-box" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>📄 D.I.Y Proposal...</span><span class="sk-pill muted" style="font-size:7px;">Pending</span></div>
+                </div>
+                <div style="font-size:8px; color:var(--ink-3); margin-top:4px;">5 of 25 files</div>
+                <div style="background:var(--indigo); color:#fff; border-radius:999px; padding:5px; text-align:center; font-size:9px; font-weight:600; margin-top:6px;">↑ Upload &amp; Extract</div>
+              </div>
+              <!-- Template (Coming Soon) -->
+              <div style="background:#F8FAFC; border-radius:8px; padding:10px; border:1px solid var(--line); min-height:280px;">
+                <div class="sk-circle" style="background:var(--indigo-tint); color:var(--indigo); width:22px; height:22px; font-size:9px; margin-bottom:6px;">▦</div>
+                <div style="font-size:9.5px; font-weight:700; margin-bottom:3px;">Select from Template</div>
+                <div style="font-size:8px; color:var(--ink-2); line-height:1.4; margin-bottom:10px;">Pre-built templates for Group or Retail.</div>
+                <div style="margin-top:200px; display:flex; align-items:center; gap:4px;">
+                  <div style="font-size:9px; color:var(--indigo); font-weight:600;">Coming soon</div>
+                  <span style="font-size:9px; color:var(--indigo);">→</span>
+                </div>
+              </div>
+              <!-- Manual -->
+              <div style="background:#F8FAFC; border-radius:8px; padding:10px; border:1px solid var(--line); min-height:280px;">
+                <div class="sk-circle" style="background:var(--brand-tint); color:var(--brand); width:22px; height:22px; font-size:9px; margin-bottom:6px;">✎</div>
+                <div style="font-size:9.5px; font-weight:700; margin-bottom:3px;">Manual Configure</div>
+                <div style="font-size:8px; color:var(--ink-2); line-height:1.4; margin-bottom:10px;">Build from scratch — coverage, rules, rates, commissions, workflows.</div>
+                <div style="margin-top:200px; display:flex; align-items:center; gap:4px;">
+                  <div style="font-size:9px; color:var(--indigo); font-weight:600;">Configure manually</div>
+                  <span style="font-size:9px; color:var(--indigo);">→</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pins -->
+          <div class="pin" style="top:18%; left:80%;">1</div>
+          <div class="pin amber" style="top:32%; left:23%;">2</div>
+          <div class="pin amber" style="top:42%; left:53%;">3</div>
+          <div class="pin" style="top:72%; left:23%;">4</div>
+          <div class="pin amber" style="top:86%; left:23%;">5</div>
+          <div class="pin" style="top:48%; left:83%;">6</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-num">1</div>
+            <div class="legend-body">
+              <h4>Notification dot competes with primary action</h4>
+              <p>The bell icon with a red dot pulls eye-weight away from the main "Upload &amp; Extract" CTA. First-time users glance up-right before they glance down.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">2</div>
+            <div class="legend-body">
+              <h4>"Generate via AI" doesn't visually dominate</h4>
+              <p>All three cards have equal visual weight. The primary path (AI) and the inactive path (Template, "Coming Soon") read the same size, same gradient, same iconography. User has to read every word to choose.</p>
+              <span class="h-tag">H6 · Recognition over recall</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">3</div>
+            <div class="legend-body">
+              <h4>"Coming Soon" wastes prime real estate</h4>
+              <p>An entire one-third of the screen is allocated to a feature that doesn't work yet. New users still need to figure out it's disabled before they move on.</p>
+              <span class="h-tag">H8 · Aesthetic &amp; minimalist</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">4</div>
+            <div class="legend-body">
+              <h4>"Pending" status is ambiguous</h4>
+              <p>Files show "Pending" before any extraction has even been triggered. Users can't tell if "Pending" means "uploaded, waiting for AI" or "not yet uploaded, click Extract to start".</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">5</div>
+            <div class="legend-body">
+              <h4>"5 of 25 files" — what's 25?</h4>
+              <p>The cap appears without explanation. Why 25? File limit? Account quota? Document type cap? No tooltip, no info icon.</p>
+              <span class="h-tag">H10 · Help &amp; documentation</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">6</div>
+            <div class="legend-body">
+              <h4>No file remove / preview affordance</h4>
+              <p>Once a file is in the queue, user can't preview it inline, can't remove it, can't reorder it. The X to dismiss is non-obvious or missing.</p>
+              <span class="h-tag">H3 · User control &amp; freedom</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-row">
+        <div class="lab">Quick fix</div>
+        <p><strong>Promote the AI path</strong> to a hero card (60% width) with a small "Other options →" link revealing Template + Manual. Mark "Coming Soon" with a dashed border, not a full card. Show file states as <em>"Uploaded · ready"</em>, not <em>"Pending"</em>, and put per-file X + preview affordances on hover.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 2 — AI Extraction Preview
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="audit-block">
+      <div class="audit-head">
+        <div class="num">02</div>
+        <h3>AI Extraction Preview — collapsed</h3>
+      </div>
+      <p class="audit-sub">Split-pane: BRD document on the left, AI summary + 89% confidence score + extractor notes + 8 collapsed extraction sections on the right. Stepper at top: Upload Document → Generate AI → Review &amp; Confirm → Product Builder.</p>
+
+      <div class="audit-grid">
+        <div class="schematic-wrap">
+          <div class="schematic" style="min-height:380px;">
+            <!-- Breadcrumb + Back -->
+            <div class="sk-row" style="margin-bottom:8px;">
+              <div style="font-size:9px; color:var(--ink-2);">Eicore / Product Config / New Product / <strong style="color:var(--indigo);">AI Extraction Preview</strong></div>
+              <div style="margin-left:auto; display:flex; gap:6px;">
+                <div class="sk-bar" style="width:14px; height:14px; border-radius:50%; background:#F1F5F9;"></div>
+              </div>
+            </div>
+            <!-- Stepper -->
+            <div class="sk-row" style="margin-bottom:8px; padding:6px 0;">
+              <span style="font-size:8.5px; color:var(--brand);">✓ Upload Document</span>
+              <div class="sk-bar" style="width:20px; height:1px; background:var(--brand);"></div>
+              <span style="font-size:8.5px; color:var(--brand);">✓ Generate via AI</span>
+              <div class="sk-bar" style="width:20px; height:1px;"></div>
+              <span class="sk-circle" style="background:var(--indigo); color:#fff; width:14px; height:14px; font-size:8px;">3</span>
+              <span style="font-size:8.5px; color:var(--indigo); font-weight:700;">Review &amp; Confirm</span>
+              <div class="sk-bar" style="width:20px; height:1px;"></div>
+              <span class="sk-circle muted" style="background:#F1F5F9; color:var(--ink-3); width:14px; height:14px; font-size:8px;">4</span>
+              <span style="font-size:8.5px; color:var(--ink-3);">Product Builder</span>
+              <div style="margin-left:auto; background:var(--indigo); color:#fff; padding:4px 10px; border-radius:6px; font-size:9px; font-weight:600;">Proceed to Product Builder →</div>
+            </div>
+            <div class="sk-row" style="margin-bottom:8px;">
+              <div class="sk-pill" style="background:#fff; border:1px solid var(--line); color:var(--ink-2); font-size:8.5px; padding:3px 10px;">← Back</div>
+            </div>
+
+            <!-- 2-column body -->
+            <div style="display:grid; grid-template-columns:1.05fr 1fr; gap:8px;">
+              <!-- Left: doc viewer -->
+              <div style="background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px;">
+                <div style="font-size:9px; font-weight:600; margin-bottom:4px;">📄 Documents</div>
+                <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:6px;">
+                  <span class="sk-pill indigo" style="font-size:7.5px;">01. BRD_DIY...docx</span>
+                  <span class="sk-pill muted" style="font-size:7.5px;">D.I.Y Health policy...</span>
+                  <span class="sk-pill muted" style="font-size:7.5px;">Proposal Form...</span>
+                </div>
+                <div style="background:#F8FAFC; height:160px; border-radius:4px; padding:10px;">
+                  <div style="font-size:10.5px; font-weight:700; text-align:center; margin-bottom:8px; text-decoration:underline;">Business Requirement Document</div>
+                  <div class="sk-row"><div class="sk-bar" style="width:50%;"></div></div>
+                  <div class="sk-row" style="margin-top:5px;"><div class="sk-bar" style="width:70%;"></div></div>
+                  <div class="sk-row" style="margin-top:5px;"><div class="sk-bar" style="width:60%;"></div></div>
+                </div>
+              </div>
+
+              <!-- Right: summary -->
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <!-- Doc summary -->
+                <div class="sk-box tint-indigo" style="padding:6px 8px;">
+                  <div style="font-size:8.5px; font-weight:700;">📄 Document Summary</div>
+                  <div style="font-size:7.5px; line-height:1.4; margin-top:2px;">Generali Central's D.I.Y Health Insurance (UIN: GCIHLIP26046V022526)...</div>
+                  <div style="font-size:7.5px; color:var(--indigo); margin-top:2px;">Show more ⌄</div>
+                </div>
+                <!-- Score + Documents toggle -->
+                <div class="sk-row" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:6px 8px; gap:8px;">
+                  <div class="sk-circle ring-success" style="width:28px; height:28px; font-size:9px;">89%</div>
+                  <div>
+                    <div style="font-size:9px; font-weight:600;">Extraction Confidence: <span style="color:var(--brand);">Good</span></div>
+                    <div style="font-size:7.5px; color:var(--ink-2);">130 of 145 fields extracted with high confidence.</div>
+                  </div>
+                  <div style="margin-left:auto; display:flex; gap:4px; align-items:center;">
+                    <div style="width:18px; height:10px; background:var(--indigo); border-radius:5px;"></div>
+                    <div style="font-size:8px;">Documents</div>
+                  </div>
+                </div>
+                <!-- Confidence chips -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
+                  <div class="sk-box tint-brand" style="padding:4px 6px; text-align:center; font-size:8.5px;">✓ 6 High</div>
+                  <div class="sk-box tint-warn" style="padding:4px 6px; text-align:center; font-size:8.5px;">⓪ 0 Medium</div>
+                  <div class="sk-box tint-crit" style="padding:4px 6px; text-align:center; font-size:8.5px;">⚠ 0 Needs Attn</div>
+                </div>
+                <!-- Notes -->
+                <div style="font-size:8px; font-weight:700; margin-top:2px;">Extractor Notes (9 notes)</div>
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                  <div class="sk-box tint-crit" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>⚠ Missing fields</span><span>1 ⌄</span></div>
+                  <div class="sk-box tint-warn" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>⇄ Multi-source variants</span><span>2 ⌄</span></div>
+                  <div class="sk-box tint-warn" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>? Ambiguous values</span><span>2 ⌄</span></div>
+                  <div class="sk-box" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between;"><span>ⓘ Other notes</span><span>4 ⌄</span></div>
+                </div>
+                <!-- Sections -->
+                <div style="font-size:8px; font-weight:700; margin-top:2px; display:flex; justify-content:space-between;"><span>Extracted Sections (8 sections)</span><span style="font-size:7px; color:var(--indigo);">Expand all   Collapse all</span></div>
+                <div class="sk-box" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between; align-items:center;">● Product Information <span class="sk-pill brand" style="font-size:7px;">High</span><span>92%</span></div>
+                <div class="sk-box" style="padding:4px 6px; font-size:8px; display:flex; justify-content:space-between; align-items:center;">● Plans <span class="sk-pill brand" style="font-size:7px;">High</span><span>92%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pins -->
+          <div class="pin" style="top:9%; left:14%;">1</div>
+          <div class="pin amber" style="top:32%; left:81%;">2</div>
+          <div class="pin" style="top:38%; left:64%;">3</div>
+          <div class="pin amber" style="top:50%; left:60%;">4</div>
+          <div class="pin" style="top:67%; left:72%;">5</div>
+          <div class="pin amber" style="top:78%; left:90%;">6</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-num">1</div>
+            <div class="legend-body">
+              <h4>Two parallel navigation systems again</h4>
+              <p>The breadcrumb ("Eicore / Product Config / New Product / AI Extraction Preview") AND the 4-step stepper both narrate where the user is. They duplicate each other and add no information about what's next.</p>
+              <span class="h-tag">H4 · Consistency &amp; standards</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">2</div>
+            <div class="legend-body">
+              <h4>"Documents" toggle has zero affordance</h4>
+              <p>A blue toggle labelled "Documents" sits next to the 89% score with no apparent function. Toggle <em>what</em>? Hide the left pane? Switch source view? Compare docs? Unguessable.</p>
+              <span class="h-tag">H10 · Help &amp; documentation</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">3</div>
+            <div class="legend-body">
+              <h4>Confidence chips contradict the score</h4>
+              <p>The big score says "130 of 145 with high confidence". The chips below say "6 High / 0 Medium / 0 Needs Attention". 6 ≠ 130. Two different denominators, no reconciliation.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">4</div>
+            <div class="legend-body">
+              <h4>Note severity tints conflict</h4>
+              <p>"Missing fields" tinted critical-red. "Multi-source variants" tinted amber. "Ambiguous values" also amber. But the severity scale isn't documented — is a missing field worse than an ambiguous value? User must guess.</p>
+              <span class="h-tag">H9 · Error recognition</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">5</div>
+            <div class="legend-body">
+              <h4>Sections collapsed by default — no preview of risk</h4>
+              <p>"8 sections, all collapsed" means user must expand each one to find out which fields are weak. No glance-level risk distribution.</p>
+              <span class="h-tag">H6 · Recognition over recall</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">6</div>
+            <div class="legend-body">
+              <h4>"Expand all / Collapse all" loses scroll context</h4>
+              <p>Click "Expand all", the screen jumps. User loses their place. No section-level memory of state.</p>
+              <span class="h-tag">H7 · Flexibility &amp; efficiency</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-row">
+        <div class="lab">Quick fix</div>
+        <p><strong>Replace the redundant stepper</strong> with a single line under the breadcrumb showing only the current + next step. <strong>Reconcile the confidence counts</strong> into one strip: "130 high · 9 medium · 6 needs attention" — same denominator throughout. <strong>Auto-expand the weakest section</strong> by default so the user lands on the most important triage point.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 3 — Plans Expanded
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="audit-block">
+      <div class="audit-head">
+        <div class="num">03</div>
+        <h3>AI Extraction Preview — Plans expanded</h3>
+      </div>
+      <p class="audit-sub">User expands the Plans section. Sees Mini / Medi / Max tier rows in a Field / Extracted Value / Confidence table, each with a "From: BRD" pill and a 92% green confidence badge.</p>
+
+      <div class="audit-grid">
+        <div class="schematic-wrap">
+          <div class="schematic" style="min-height:380px;">
+            <!-- Section header -->
+            <div class="sk-box" style="padding:6px 10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:9.5px; font-weight:700;">● Product Information <span class="sk-pill brand" style="font-size:7px;">High</span></span>
+              <span style="font-size:8.5px;">92% ⌄</span>
+            </div>
+            <div class="sk-box tint-brand" style="padding:6px 10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-color:var(--brand);">
+              <span style="font-size:9.5px; font-weight:700;">● Plans <span class="sk-pill brand" style="font-size:7px;">High</span></span>
+              <span style="font-size:8.5px;">92% ⌃</span>
+            </div>
+            <!-- Section score bar -->
+            <div class="sk-row" style="margin-bottom:6px;">
+              <span style="font-size:8px; color:var(--ink-2);">Section score</span>
+              <div style="flex:1; height:4px; background:#F1F5F9; border-radius:2px; margin:0 6px; overflow:hidden;"><div style="width:92%; height:100%; background:var(--brand);"></div></div>
+              <span style="font-size:8px; font-weight:700; color:var(--brand);">92%</span>
+            </div>
+            <!-- Table -->
+            <div style="background:#fff; border:1px solid var(--line); border-radius:6px;">
+              <!-- Header row -->
+              <div style="display:grid; grid-template-columns:60px 1fr 60px; padding:6px 10px; background:#F8FAFC; font-size:7.5px; font-weight:700; color:var(--ink-3); letter-spacing:.05em;">
+                <span>FIELD</span><span>EXTRACTED VALUE</span><span style="text-align:right;">CONF.</span>
+              </div>
+              <!-- Mini row -->
+              <div style="display:grid; grid-template-columns:60px 1fr 60px; padding:8px 10px; gap:6px; border-top:1px solid var(--line);">
+                <span style="font-size:8.5px; font-weight:600;">Mini</span>
+                <div>
+                  <div style="font-size:8px; line-height:1.4;">Entry-level plan with sum insured of Rs.4L or Rs.5L. Floater available for Self+Spouse/LP+Children.</div>
+                  <span class="sk-pill indigo" style="font-size:6.5px; margin-top:3px; display:inline-block;">From: BRD</span>
+                </div>
+                <span style="font-size:8.5px; font-weight:600; color:var(--brand); text-align:right;">● 92%</span>
+              </div>
+              <!-- Medi row -->
+              <div style="display:grid; grid-template-columns:60px 1fr 60px; padding:8px 10px; gap:6px; border-top:1px solid var(--line);">
+                <span style="font-size:8.5px; font-weight:600;">Medi</span>
+                <div>
+                  <div style="font-size:8px; line-height:1.4;">Mid-tier plan with sum insured from Rs.6L to Rs.10L. Floater extended to cover Parents and Parents-in-law.</div>
+                  <span class="sk-pill indigo" style="font-size:6.5px; margin-top:3px; display:inline-block;">From: BRD</span>
+                </div>
+                <span style="font-size:8.5px; font-weight:600; color:var(--brand); text-align:right;">● 92%</span>
+              </div>
+              <!-- Max row -->
+              <div style="display:grid; grid-template-columns:60px 1fr 60px; padding:8px 10px; gap:6px; border-top:1px solid var(--line);">
+                <span style="font-size:8.5px; font-weight:600;">Max</span>
+                <div>
+                  <div style="font-size:8px; line-height:1.4;">Top-tier plan with sum insured from Rs.11L to Rs.15L. Widest floater (Self+Spouse+Children+Parents+Parents-in-law).</div>
+                  <span class="sk-pill indigo" style="font-size:6.5px; margin-top:3px; display:inline-block;">From: BRD</span>
+                </div>
+                <span style="font-size:8.5px; font-weight:600; color:var(--brand); text-align:right;">● 92%</span>
+              </div>
+            </div>
+            <!-- Next sections -->
+            <div style="margin-top:6px;">
+              <div class="sk-box" style="padding:6px 10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:9px;">● Coverage Details <span class="sk-pill brand" style="font-size:7px;">High</span></span>
+                <span style="font-size:8px;">92% ⌄</span>
+              </div>
+              <div class="sk-box" style="padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:9px;">● Member Eligibility <span class="sk-pill brand" style="font-size:7px;">High</span></span>
+                <span style="font-size:8px;">93% ⌄</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pin amber" style="top:23%; left:90%;">1</div>
+          <div class="pin amber" style="top:38%; left:90%;">2</div>
+          <div class="pin" style="top:52%; left:38%;">3</div>
+          <div class="pin" style="top:60%; left:60%;">4</div>
+          <div class="pin amber" style="top:80%; left:38%;">5</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item amber">
+            <div class="legend-num">1</div>
+            <div class="legend-body">
+              <h4>Section score appears twice</h4>
+              <p>"92%" shown in the collapsed header AND again as a full progress bar in the expanded body. Three different visual encodings of the same number. Cognitive cost.</p>
+              <span class="h-tag">H8 · Aesthetic &amp; minimalist</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">2</div>
+            <div class="legend-body">
+              <h4>All three plans show 92% — looks templated</h4>
+              <p>Mini, Medi, and Max all return identical 92% confidence. This is either a real signal (AI calibrated uniformly) or noise (defaulted). Without a confidence breakdown by underlying signal, it's impossible to tell.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">3</div>
+            <div class="legend-body">
+              <h4>No cross-plan comparison</h4>
+              <p>The user's main task at this step is to verify the <em>progression</em> from Mini→Medi→Max makes sense. The table forces sequential reading of three paragraph descriptions. No side-by-side numeric comparison.</p>
+              <span class="h-tag">H6 · Recognition over recall</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">4</div>
+            <div class="legend-body">
+              <h4>"From: BRD" pill doesn't link to source</h4>
+              <p>The pill suggests provenance but offers no click-through. To verify, user has to manually scroll the left pane document. Two-step lookup for what should be a one-click jump.</p>
+              <span class="h-tag missing">missing affordance</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">5</div>
+            <div class="legend-body">
+              <h4>Long descriptions cramped in narrow column</h4>
+              <p>"Entry-level plan with sum insured of Rs.4L or Rs.5L. Floater available for Self+Spouse/LP+Children." is multiline prose inside a tabular cell. Information density mismatches the visual container.</p>
+              <span class="h-tag">H8 · Aesthetic &amp; minimalist</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-row">
+        <div class="lab">Quick fix</div>
+        <p><strong>Replace the row-per-plan table</strong> with three vertical comparison columns side-by-side: each column is a plan with its key numeric values (SI min/max, floater scope, key benefits) as a bullet stack. Visual diff at a glance. <strong>Make the "From: BRD" pill clickable</strong> — it scrolls the left pane and highlights the source sentence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 4 — Product Builder
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="audit-block">
+      <div class="audit-head">
+        <div class="num">04</div>
+        <h3>Product Builder — Overview with Tree</h3>
+      </div>
+      <p class="audit-sub">The user enters the workspace. Top: 7-step pipeline. Yellow banner with "Next: Verify extracted fields for OPD Cover" + "Needs Attention 30/30". Three columns: left nav, middle overview/cards, right Tree panel with Plans collapsed.</p>
+
+      <div class="audit-grid">
+        <div class="schematic-wrap">
+          <div class="schematic" style="min-height:380px;">
+            <!-- Pipeline -->
+            <div class="sk-row" style="margin-bottom:6px; padding:4px 0;">
+              <span style="font-size:7.5px; color:var(--brand);">● Configure Product</span>
+              <div class="sk-bar" style="flex:1; height:1px; background:var(--brand);"></div>
+              <span style="font-size:7.5px; color:var(--brand);">● Configure Rules</span>
+              <div class="sk-bar" style="flex:1; height:1px; background:var(--brand);"></div>
+              <span style="font-size:7.5px; color:var(--brand);">● Configure Rating</span>
+              <div class="sk-bar" style="flex:1; height:1px;"></div>
+              <span class="sk-circle" style="background:var(--indigo); color:#fff; width:14px; height:14px; font-size:8px;">4</span>
+              <span style="font-size:7.5px; color:var(--indigo); font-weight:700;">Issues Resolved</span>
+              <div class="sk-bar" style="flex:1; height:1px;"></div>
+              <span style="font-size:7.5px; color:var(--ink-3);">5 Review</span>
+              <div class="sk-bar" style="flex:1; height:1px;"></div>
+              <span style="font-size:7.5px; color:var(--ink-3);">6 Approved</span>
+              <div class="sk-bar" style="flex:1; height:1px;"></div>
+              <span style="font-size:7.5px; color:var(--ink-3);">7 Published</span>
+            </div>
+            <!-- Banner -->
+            <div class="sk-box tint-warn" style="padding:6px 10px; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+              <span style="font-size:8px; font-weight:600;">⚠ Next: Verify extracted fields for OPD Cover · in Mini</span>
+              <span class="sk-pill warn" style="margin-left:auto; font-size:8px;">Needs Attention → 30/30</span>
+            </div>
+
+            <!-- 3 col -->
+            <div style="display:grid; grid-template-columns:90px 1fr 130px; gap:6px;">
+              <!-- Left nav -->
+              <div class="sk-box" style="padding:6px;">
+                <div style="font-size:7px; font-weight:700; color:var(--ink-3); letter-spacing:.08em;">NAVIGATION</div>
+                <div style="font-size:8px; margin-top:4px;">▦ Overview</div>
+                <div style="font-size:8px; color:var(--ink-2); margin-top:3px;">≡ Basic Details</div>
+                <div style="font-size:8px; color:var(--ink-2); margin-top:3px;">? Questions</div>
+                <div style="font-size:8px; color:var(--ink-2); margin-top:3px;">⊘ Exclusions</div>
+                <div style="font-size:7px; font-weight:700; color:var(--ink-3); margin-top:8px; letter-spacing:.08em;">PLANS +</div>
+                <div style="font-size:8px; margin-top:3px;">● Mini</div>
+                <div style="font-size:8px; color:var(--ink-2); margin-top:3px;">● Medi</div>
+                <div style="font-size:8px; color:var(--ink-2); margin-top:3px;">● Max</div>
+              </div>
+              <!-- Middle -->
+              <div>
+                <!-- Overview card -->
+                <div class="sk-box" style="padding:8px;">
+                  <div class="sk-row" style="gap:8px;">
+                    <div class="sk-circle ring-success" style="width:30px; height:30px; font-size:9px;">89%</div>
+                    <div>
+                      <div style="font-size:9px; font-weight:700;">Extraction complete</div>
+                      <div style="font-size:7.5px; color:var(--ink-2);">145 of 155 fields extracted · <strong style="color:var(--brand);">0 fields need review · 0 sections flagged</strong></div>
+                    </div>
+                  </div>
+                  <div style="margin-top:6px; padding-top:6px; border-top:1px solid var(--line);">
+                    <div style="font-size:8px; font-weight:700;">PRODUCT SUMMARY</div>
+                    <div style="font-size:7.5px; color:var(--ink-2); margin-top:3px;">D.I.Y Health Insurance · Customisable health from Generali Central. <strong>3 Plans · ₹4L–₹15L · 111 Coverages</strong></div>
+                  </div>
+                </div>
+                <!-- Plan cards -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; margin-top:6px;">
+                  <div class="sk-box" style="padding:6px; font-size:7.5px;"><div style="font-weight:700;">● Mini</div><div style="color:var(--ink-3); margin-top:3px;">Plan Limits 1</div><div style="color:var(--ink-3);">Member 6</div><div style="color:var(--ink-3);">Premium 3</div><div style="color:var(--ink-3);">Coverages 37</div></div>
+                  <div class="sk-box" style="padding:6px; font-size:7.5px;"><div style="font-weight:700;">● Medi</div><div style="color:var(--ink-3); margin-top:3px;">Plan Limits 1</div><div style="color:var(--ink-3);">Member 6</div><div style="color:var(--ink-3);">Premium 3</div><div style="color:var(--ink-3);">Coverages 37</div></div>
+                  <div class="sk-box" style="padding:6px; font-size:7.5px;"><div style="font-weight:700;">● Max</div><div style="color:var(--ink-3); margin-top:3px;">Plan Limits 1</div><div style="color:var(--ink-3);">Member 6</div><div style="color:var(--ink-3);">Premium 3</div><div style="color:var(--ink-3);">Coverages 37</div></div>
+                  <div class="sk-box" style="padding:6px; font-size:7.5px; border:1px dashed var(--line-strong); text-align:center; color:var(--ink-3);">+<br>Add Plan</div>
+                </div>
+              </div>
+              <!-- Right tree -->
+              <div class="sk-box" style="padding:6px;">
+                <div style="display:flex; gap:5px; padding-bottom:3px; border-bottom:1px solid var(--line);">
+                  <span style="font-size:7.5px; color:var(--indigo); font-weight:700; border-bottom:2px solid var(--indigo); padding-bottom:2px;">Tree</span>
+                  <span style="font-size:7.5px; color:var(--ink-3);">Extr.</span>
+                  <span style="font-size:7.5px; color:var(--ink-3);">Iss.</span>
+                  <span style="font-size:7.5px; color:var(--ink-3);">Docs</span>
+                </div>
+                <div style="font-size:7.5px; font-weight:700; color:var(--ink-3); letter-spacing:.04em; margin-top:5px;">PRODUCT TREE</div>
+                <div class="sk-box tint-indigo" style="padding:3px 6px; font-size:8px; margin-top:3px; border:1px solid var(--indigo);">D.I.Y Health Insurance</div>
+                <div style="font-size:7.5px; color:var(--ink-3); margin-top:4px;">⌄ PLANS</div>
+                <div class="sk-box" style="padding:3px 6px; font-size:8px; margin-top:3px; border:1px solid var(--indigo); color:var(--indigo);">▸ Mini</div>
+                <div class="sk-box" style="padding:3px 6px; font-size:8px; margin-top:3px;">▸ Medi</div>
+                <div class="sk-box" style="padding:3px 6px; font-size:8px; margin-top:3px;">▸ Max</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pin" style="top:12%; left:50%;">1</div>
+          <div class="pin" style="top:24%; left:90%;">2</div>
+          <div class="pin" style="top:30%; left:14%;">3</div>
+          <div class="pin amber" style="top:46%; left:50%;">4</div>
+          <div class="pin" style="top:75%; left:50%;">5</div>
+          <div class="pin" style="top:65%; left:88%;">6</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-num">1</div>
+            <div class="legend-body">
+              <h4>Two parallel progress models</h4>
+              <p>The 7-step pipeline at the top AND the 5-stage Builder Roadmap on the left rail (not shown here but present in the live screen) both claim to track progress. They overlap and disagree about what counts as a "stage".</p>
+              <span class="h-tag">H4 · Consistency &amp; standards</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">2</div>
+            <div class="legend-body">
+              <h4>"30/30" — ambiguous denominator</h4>
+              <p>Is it 30 needing attention out of 30 total flagged? Or 30 of 30 already addressed? In English it could mean either. The user pauses to interpret.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">3</div>
+            <div class="legend-body">
+              <h4>Product tree, copy #1 of 3</h4>
+              <p>The left rail navigation IS a product tree (Plans → Mini/Medi/Max). Same structure rendered again in the middle (Plan cards) and the right (Tree tab). Three copies, one screen.</p>
+              <span class="h-tag">H8 · Aesthetic &amp; minimalist</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">4</div>
+            <div class="legend-body">
+              <h4>"0 fields need review" contradicts the banner</h4>
+              <p>The Overview confidently states "0 fields need review · 0 sections flagged" in brand-green type. The yellow banner directly above says "30/30 needs attention". User can't tell which is the source of truth.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">5</div>
+            <div class="legend-body">
+              <h4>Plan cards show counts, not values</h4>
+              <p>"Plan Limits 1 · Member 6 · Premium 3 · Coverages 37" — these are <em>counts</em> of items, not the <em>values</em> the user needs to verify. The actual data (e.g. "Sum Insured ₹4L–₹5L") is buried two clicks deep.</p>
+              <span class="h-tag">H6 · Recognition over recall</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">6</div>
+            <div class="legend-body">
+              <h4>4-tab right panel fights for attention</h4>
+              <p>Tree / Extr. / Iss. / Docs — four parallel surfaces. Each tab switch loses the user's place in the others.</p>
+              <span class="h-tag">H7 · Flexibility &amp; efficiency</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-row">
+        <div class="lab">Quick fix</div>
+        <p><strong>Collapse the 7-step pipeline into the existing left-rail roadmap</strong>. <strong>Replace the plan-card counts with extraction-health cells</strong> — one cell per field, coloured by confidence. <strong>Merge the 4-tab right panel into a single live activity feed</strong> (already validated in your variations).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 5 — Builder · Mini Tree
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="audit-block">
+      <div class="audit-head">
+        <div class="num">05</div>
+        <h3>Product Builder — Mini expanded in Tree</h3>
+      </div>
+      <p class="audit-sub">User expands Mini in the right Tree panel. Sees Plan Limits, Member Details, Coverages, Premium Raters. Under Premium Raters: three red-boxed items — Age, Family Construct, Pre-existing Conditions.</p>
+
+      <div class="audit-grid">
+        <div class="schematic-wrap">
+          <div class="schematic" style="min-height:380px;">
+            <div class="sk-row" style="margin-bottom:8px; padding:4px 0;">
+              <span style="font-size:7.5px; color:var(--brand);">● Configure Product</span>
+              <div class="sk-bar" style="flex:1; height:1px; background:var(--brand);"></div>
+              <span style="font-size:7.5px; color:var(--brand);">● Config Rules</span>
+              <div class="sk-bar" style="flex:1; height:1px; background:var(--brand);"></div>
+              <span style="font-size:7.5px; color:var(--brand);">● Config Rating</span>
+              <div class="sk-bar" style="flex:1; height:1px;"></div>
+              <span class="sk-circle" style="background:var(--indigo); color:#fff; width:14px; height:14px; font-size:8px;">4</span>
+              <span style="font-size:7.5px; color:var(--indigo); font-weight:700;">Issues Resolved</span>
+              <div class="sk-bar" style="flex:1; height:1px;"></div>
+              <span style="font-size:7.5px; color:var(--ink-3);">5 Review</span>
+            </div>
+
+            <div class="sk-box tint-warn" style="padding:6px 10px; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+              <span style="font-size:8px; font-weight:600;">⚠ Next: Verify extracted fields for OPD Cover · in Mini</span>
+              <span class="sk-pill warn" style="margin-left:auto; font-size:8px;">30/30</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:75px 1fr 170px; gap:6px;">
+              <div class="sk-box" style="padding:6px; font-size:7.5px;">
+                <div style="font-weight:700; color:var(--ink-3); font-size:6.5px;">NAVIGATION</div>
+                <div style="margin-top:3px;">▦ Overview</div>
+                <div style="color:var(--ink-2); margin-top:2px;">≡ Basic Details</div>
+                <div style="color:var(--ink-2); margin-top:2px;">? Questions</div>
+                <div style="color:var(--ink-2); margin-top:2px;">⊘ Exclusions</div>
+                <div style="font-weight:700; color:var(--ink-3); font-size:6.5px; margin-top:6px;">PLANS</div>
+                <div style="margin-top:2px;">● Mini</div>
+                <div style="color:var(--ink-2); margin-top:2px;">● Medi</div>
+                <div style="color:var(--ink-2); margin-top:2px;">● Max</div>
+              </div>
+              <div>
+                <div class="sk-box" style="padding:8px;">
+                  <div style="font-size:9px; font-weight:700; margin-bottom:4px;">D.I.Y Health Insurance · Overview</div>
+                  <div style="font-size:7.5px; color:var(--ink-2);">Click any plan to view full configuration.</div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin-top:6px;">
+                  <div class="sk-box" style="padding:6px; font-size:7.5px;"><div style="font-weight:700;">Mini</div><div style="color:var(--ink-3); margin-top:3px;">Plan Limits 1</div><div style="color:var(--ink-3);">Member 6</div><div style="color:var(--ink-3);">Premium 3</div><div style="color:var(--ink-3);">Coverages 37</div></div>
+                  <div class="sk-box" style="padding:6px; font-size:7.5px;"><div style="font-weight:700;">Medi</div><div style="color:var(--ink-3); margin-top:3px;">Plan Limits 1</div><div style="color:var(--ink-3);">Member 6</div><div style="color:var(--ink-3);">Premium 3</div><div style="color:var(--ink-3);">Coverages 37</div></div>
+                  <div class="sk-box" style="padding:6px; font-size:7.5px;"><div style="font-weight:700;">Max</div><div style="color:var(--ink-3); margin-top:3px;">Plan Limits 1</div><div style="color:var(--ink-3);">Member 6</div><div style="color:var(--ink-3);">Premium 3</div><div style="color:var(--ink-3);">Coverages 37</div></div>
+                </div>
+              </div>
+              <!-- Right tree with expanded Mini -->
+              <div class="sk-box" style="padding:6px;">
+                <div style="display:flex; gap:5px; padding-bottom:3px; border-bottom:1px solid var(--line);">
+                  <span style="font-size:7.5px; color:var(--indigo); font-weight:700; border-bottom:2px solid var(--indigo); padding-bottom:2px;">Tree</span>
+                  <span style="font-size:7.5px; color:var(--ink-3);">Extr.</span>
+                  <span style="font-size:7.5px; color:var(--ink-3);">Iss.</span>
+                  <span style="font-size:7.5px; color:var(--ink-3);">Docs</span>
+                </div>
+                <div style="font-size:7px; font-weight:700; color:var(--ink-3); margin-top:4px;">PRODUCT TREE</div>
+                <div class="sk-box tint-indigo" style="padding:3px 6px; font-size:8px; margin-top:3px;">D.I.Y Health Insurance</div>
+                <div style="font-size:7px; color:var(--ink-3); margin-top:3px;">⌄ PLANS</div>
+                <div class="sk-box tint-indigo" style="padding:3px 6px; font-size:8px; margin-top:3px;">⌄ Mini</div>
+                <div style="margin-left:10px; margin-top:2px;">
+                  <div class="sk-box" style="padding:2px 5px; font-size:7px; margin-bottom:2px;">▸ PLAN LIMITS</div>
+                  <div class="sk-box" style="padding:2px 5px; font-size:7px; margin-bottom:2px;">▸ MEMBER DETAILS</div>
+                  <div class="sk-box" style="padding:2px 5px; font-size:7px; margin-bottom:2px;">▸ COVERAGES</div>
+                  <div class="sk-box" style="padding:2px 5px; font-size:7px;">⌄ PREMIUM RATERS</div>
+                  <div style="margin-left:8px; margin-top:2px;">
+                    <div class="sk-box tint-crit" style="padding:2px 5px; font-size:7px; margin-bottom:2px;">Age</div>
+                    <div class="sk-box tint-crit" style="padding:2px 5px; font-size:7px; margin-bottom:2px;">Family Construct</div>
+                    <div class="sk-box tint-crit" style="padding:2px 5px; font-size:7px;">Pre-existing Conditions</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pin" style="top:60%; left:90%;">1</div>
+          <div class="pin amber" style="top:78%; left:88%;">2</div>
+          <div class="pin amber" style="top:85%; left:91%;">3</div>
+          <div class="pin" style="top:70%; left:78%;">4</div>
+          <div class="pin amber" style="top:55%; left:91%;">5</div>
+          <div class="pin" style="top:38%; left:50%;">6</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-num">1</div>
+            <div class="legend-body">
+              <h4>Red boxes are signal, not action</h4>
+              <p>Age · Family Construct · Pre-existing Conditions are wrapped in red boxes. But no inline action — clicking just selects, doesn't navigate to the fix flow.</p>
+              <span class="h-tag">H9 · Error recognition</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">2</div>
+            <div class="legend-body">
+              <h4>"Age" — missing what, exactly?</h4>
+              <p>Is the age value missing? The age range? The validation rule? No subtitle, no tooltip, no diagnostic. User must remember from somewhere else.</p>
+              <span class="h-tag">H9 · Error recognition</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">3</div>
+            <div class="legend-body">
+              <h4>Three red items, all equal weight</h4>
+              <p>No severity ranking among the three. Are they all blockers? All warnings? Should the user fix Age first or Family Construct first? Order matters for workflow time.</p>
+              <span class="h-tag">H6 · Recognition over recall</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">4</div>
+            <div class="legend-body">
+              <h4>Deep nesting: 4 levels indent</h4>
+              <p>Product → Plans → Mini → Premium Raters → Age. Each indent eats horizontal space and visually demotes the bottom item. The actual problems are the most-indented, least-visible nodes.</p>
+              <span class="h-tag">H8 · Aesthetic &amp; minimalist</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">5</div>
+            <div class="legend-body">
+              <h4>All-caps tree node labels</h4>
+              <p>"PLAN LIMITS · MEMBER DETAILS · COVERAGES · PREMIUM RATERS" feels like internal database table names, not user-facing labels. Mixed case + sentence labels would scan better.</p>
+              <span class="h-tag">H2 · Match with real world</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">6</div>
+            <div class="legend-body">
+              <h4>Center pane unchanged when tree expands</h4>
+              <p>User expands Mini in the right tree, expecting to see Mini details in the middle. But the middle stays on Overview. No coupling between tree selection and main canvas.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-row">
+        <div class="lab">Quick fix</div>
+        <p><strong>Each red item becomes a feed entry</strong> with: subtitle ("missing value · expected age band"), severity ("Blocker"), and an inline "Fix →" link that <em>opens the form on the right field</em>. <strong>Couple tree selection to the centre canvas</strong> — clicking Mini in the tree should swap the middle pane to Mini details, not stay on Overview.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 6 — Product Review
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="audit-block">
+      <div class="audit-head">
+        <div class="num">06</div>
+        <h3>Product Review — pre-publish checklist</h3>
+      </div>
+      <p class="audit-sub">The pre-publish gate. Readiness banner. Publishing Checklist with blocking errors, warnings, and "done" items. Right-column subsystem cards: Rules Configuration · Field Confidence · Members &amp; Raters.</p>
+
+      <div class="audit-grid">
+        <div class="schematic-wrap">
+          <div class="schematic" style="min-height:380px;">
+            <!-- Header -->
+            <div class="sk-row" style="margin-bottom:8px;">
+              <div style="font-size:9px; font-weight:700;">Product Review — D.I.Y Health Insurance · Mini Plan</div>
+              <div style="margin-left:auto; display:flex; gap:5px;">
+                <div class="sk-pill" style="background:#fff; border:1px solid var(--line); font-size:8px;">Configure Rules</div>
+                <div class="sk-pill" style="background:var(--indigo); color:#fff; font-size:8px;">Submit for Approval →</div>
+              </div>
+            </div>
+            <!-- Banner -->
+            <div class="sk-box tint-crit" style="padding:8px 10px; margin-bottom:8px;">
+              <div style="font-size:9px; font-weight:700; color:var(--critical);">⊙ Not ready to publish</div>
+              <div style="font-size:7.5px; color:var(--ink-2);">2 blocking errors and 3 unreviewed sections must be resolved before submission.</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:6px;">
+              <!-- Left: Publishing Checklist -->
+              <div>
+                <div class="sk-box" style="padding:8px; margin-bottom:6px;">
+                  <div style="font-size:9px; font-weight:700; margin-bottom:5px;">Publishing Checklist</div>
+                  <div class="sk-box tint-crit" style="padding:4px 6px; font-size:7.5px; display:flex; align-items:center; gap:5px; margin-bottom:3px;"><span class="sk-circle" style="width:12px; height:12px; background:var(--critical); color:#fff; font-size:8px;">!</span><span>Configure hospitalisation sub-limit rules</span><span class="sk-pill crit" style="margin-left:auto; font-size:7px;">Blocker</span></div>
+                  <div class="sk-box tint-crit" style="padding:4px 6px; font-size:7.5px; display:flex; align-items:center; gap:5px; margin-bottom:3px;"><span class="sk-circle" style="width:12px; height:12px; background:var(--critical); color:#fff; font-size:8px;">!</span><span>Set Min/Max coverage limits for Hospitalisation</span><span class="sk-pill crit" style="margin-left:auto; font-size:7px;">Blocker</span></div>
+                  <div class="sk-box tint-warn" style="padding:4px 6px; font-size:7.5px; display:flex; align-items:center; gap:5px; margin-bottom:3px;"><span class="sk-circle" style="width:12px; height:12px; background:var(--warning); color:#fff; font-size:8px;">?</span><span>Verify maternity benefit amounts (64% confidence)</span><span class="sk-pill warn" style="margin-left:auto; font-size:7px;">Warning</span></div>
+                  <div class="sk-box tint-warn" style="padding:4px 6px; font-size:7.5px; display:flex; align-items:center; gap:5px; margin-bottom:3px;"><span class="sk-circle" style="width:12px; height:12px; background:var(--warning); color:#fff; font-size:8px;">?</span><span>Verify family construct default value</span><span class="sk-pill warn" style="margin-left:auto; font-size:7px;">Warning</span></div>
+                  <div class="sk-box tint-warn" style="padding:4px 6px; font-size:7.5px; display:flex; align-items:center; gap:5px;"><span class="sk-circle" style="width:12px; height:12px; background:var(--warning); color:#fff; font-size:8px;">?</span><span>Mark all 10 sections as Reviewed</span><span class="sk-pill warn" style="margin-left:auto; font-size:7px;">Warning</span></div>
+                </div>
+                <!-- Plan Configuration -->
+                <div class="sk-box" style="padding:8px; margin-bottom:6px;">
+                  <div style="font-size:9px; font-weight:700; margin-bottom:5px; display:flex; justify-content:space-between;">Plan Configuration <span class="sk-pill brand" style="font-size:7px;">✓ Complete</span></div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:7.5px;">
+                    <div style="display:flex; justify-content:space-between;"><span style="color:var(--ink-2);">Plan name</span><strong>Mini Plan ✓</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:var(--ink-2);">Plan code</span><strong>MIN-001 ✓</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:var(--ink-2);">SI options</span><strong>₹4L, ₹5L ✓</strong></div>
+                  </div>
+                </div>
+                <!-- Coverage Configuration -->
+                <div class="sk-box" style="padding:8px;">
+                  <div style="font-size:9px; font-weight:700; margin-bottom:5px; display:flex; justify-content:space-between;">Coverage Configuration <span class="sk-pill crit" style="font-size:7px;">⚠ 2 Blockers</span></div>
+                  <div style="font-size:7px; color:var(--ink-2); display:flex; justify-content:space-between;"><span>Hospitalisation sub-limits</span><strong style="color:var(--critical);">Not configured ⚠</strong></div>
+                  <div style="font-size:7px; color:var(--ink-2); display:flex; justify-content:space-between; margin-top:3px;"><span>Hospitalisation min/max</span><strong style="color:var(--critical);">Not set ⚠</strong></div>
+                </div>
+              </div>
+              <!-- Right: Subsystem cards -->
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <div class="sk-box" style="padding:6px;">
+                  <div style="font-size:7.5px; font-weight:700; color:var(--ink-3); letter-spacing:.08em;">RULES CONFIGURATION</div>
+                  <div style="font-size:7px; color:var(--critical); margin-top:3px;">● Room rent sub-limit rule — not configured</div>
+                  <div style="font-size:7px; color:var(--brand); margin-top:2px;">✓ Entry age rule active</div>
+                  <div style="font-size:7px; color:var(--brand); margin-top:2px;">✓ PED waiting period rule active</div>
+                </div>
+                <div class="sk-box" style="padding:6px;">
+                  <div style="font-size:7.5px; font-weight:700; color:var(--ink-3); letter-spacing:.08em;">FIELD CONFIDENCE</div>
+                  <div style="font-size:7px; display:flex; justify-content:space-between; margin-top:3px;"><span style="color:var(--ink-2);">Network &amp; hospitals</span><strong style="color:var(--brand);">88% Good</strong></div>
+                  <div style="font-size:7px; display:flex; justify-content:space-between; margin-top:2px;"><span style="color:var(--ink-2);">Coverage limits</span><strong style="color:var(--warning);">Review</strong></div>
+                  <div style="font-size:7px; display:flex; justify-content:space-between; margin-top:2px;"><span style="color:var(--ink-2);">Terms &amp; conditions</span><strong style="color:var(--critical);">38% Poor</strong></div>
+                  <div style="font-size:7px; display:flex; justify-content:space-between; margin-top:2px;"><span style="color:var(--ink-2);">Grace period</span><strong style="color:var(--critical);">Missing</strong></div>
+                </div>
+                <div class="sk-box" style="padding:6px;">
+                  <div style="font-size:7.5px; font-weight:700; color:var(--ink-3); letter-spacing:.08em;">MEMBERS &amp; RATERS</div>
+                  <div style="font-size:7px; display:flex; justify-content:space-between; margin-top:3px;"><span style="color:var(--ink-2);">Self entry age</span><strong>18–65 ✓</strong></div>
+                  <div style="font-size:7px; display:flex; justify-content:space-between; margin-top:2px;"><span style="color:var(--ink-2);">Family construct</span><strong style="color:var(--warning);">Review</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pin" style="top:24%; left:50%;">1</div>
+          <div class="pin amber" style="top:42%; left:32%;">2</div>
+          <div class="pin" style="top:60%; left:33%;">3</div>
+          <div class="pin amber" style="top:72%; left:78%;">4</div>
+          <div class="pin" style="top:54%; left:90%;">5</div>
+          <div class="pin amber" style="top:88%; left:79%;">6</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-num">1</div>
+            <div class="legend-body">
+              <h4>The "Post-hoc Shock"</h4>
+              <p>This is the first time the user sees "2 blocking errors". These problems existed back in Screen 4 and 5 — they were buried under counts and tree nodes. By the time the user arrives here, they've already invested an hour. <strong>Critical surprise at the worst moment.</strong></p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">2</div>
+            <div class="legend-body">
+              <h4>Blockers and warnings stacked together</h4>
+              <p>The Publishing Checklist mixes two severity bands in one list. Visually they're distinguished by tint, but the list doesn't <em>group</em> them or sequence them. User reads top-down, no severity-first ordering.</p>
+              <span class="h-tag">H9 · Error recognition</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">3</div>
+            <div class="legend-body">
+              <h4>No "Resolve" affordance on items</h4>
+              <p>Each checklist row has the problem but no inline button to fix it. User has to navigate elsewhere (where?) to address each item. Cognitive cost: remembering 5 things to do.</p>
+              <span class="h-tag">H3 · User control &amp; freedom</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">4</div>
+            <div class="legend-body">
+              <h4>"Field Confidence" data is now visible too late</h4>
+              <p>"Terms &amp; conditions: 38% Poor · Grace period: Missing". This information existed back at Screen 2 (Extraction). Why does the user see it for the first time here? Because the extraction screen showed aggregate scores, not field-level.</p>
+              <span class="h-tag">H1 · Visibility of system status</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-num">5</div>
+            <div class="legend-body">
+              <h4>Three "subsystem" cards are arbitrary</h4>
+              <p>Why these three groupings (Rules / Field Confidence / Members &amp; Raters)? Why not also "Coverages summary", "Document quality"? The categories appear here without context anywhere else in the journey.</p>
+              <span class="h-tag">H4 · Consistency &amp; standards</span>
+            </div>
+          </div>
+          <div class="legend-item amber">
+            <div class="legend-num">6</div>
+            <div class="legend-body">
+              <h4>"Submit for Approval" is the only forward action</h4>
+              <p>Greyed out due to blockers, but with no path indicated to <em>unblock</em>. User has to back-navigate to find the right field, fix it, and return. No "Fix and continue" flow.</p>
+              <span class="h-tag">H3 · User control &amp; freedom</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-row">
+        <div class="lab">Quick fix</div>
+        <p><strong>Surface blockers earlier</strong>: the same banner that lives here ("Not ready to publish · 2 errors") should appear at the top of the Builder Workspace from the moment the user lands. <strong>Each row in the checklist is a deep-link</strong> that jumps to the offending field in edit mode. <strong>Group by severity</strong>: blockers, then warnings, then verified — with a horizontal severity bar visualising counts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CROSS-CUTTING THEMES
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">07 — Cross-cutting themes</span>
+      <h2>Five problems that repeat across the journey.</h2>
+      <p class="italic">Each theme below appears on 3+ screens. Fixing them addresses dozens of individual violations at once.</p>
+    </div>
+
+    <div class="themes">
+      <div class="theme">
+        <div class="theme-num">A</div>
+        <h4>Two parallel navigation systems contradict each other</h4>
+        <p>Every screen carries both a breadcrumb-style stepper AND a roadmap-style stage indicator. They duplicate, sometimes disagree, and split user attention.</p>
+        <div class="scope"><strong>Appears on:</strong> Screens 02 · 03 · 04 · 05 · 06</div>
+      </div>
+      <div class="theme">
+        <div class="theme-num">B</div>
+        <h4>Confidence numbers never reconcile</h4>
+        <p>Screen 02 says "130 of 145 high" but the chip strip says "6 High". Screen 04 says "0 fields need review" but the banner says "30/30 needs attention". Different denominators, no truth.</p>
+        <div class="scope"><strong>Appears on:</strong> Screens 02 · 03 · 04 · 06</div>
+      </div>
+      <div class="theme">
+        <div class="theme-num">C</div>
+        <h4>The product tree is rendered 2–3× per screen</h4>
+        <p>Left rail + middle plan cards + right tree tab. Same hierarchy, three encodings. None is the single source of truth.</p>
+        <div class="scope"><strong>Appears on:</strong> Screens 04 · 05</div>
+      </div>
+      <div class="theme">
+        <div class="theme-num">D</div>
+        <h4>Errors lack actionable context</h4>
+        <p>Red items (Age, Family Construct, Pre-existing) tell the user <em>that</em> something is wrong but never <em>what</em>, <em>where</em>, or <em>how to fix</em>. No inline diagnostic, no jump-to-fix, no severity ordering.</p>
+        <div class="scope"><strong>Appears on:</strong> Screens 04 · 05 · 06</div>
+      </div>
+      <div class="theme">
+        <div class="theme-num">E</div>
+        <h4>Critical information arrives too late</h4>
+        <p>"38% Poor confidence on Terms &amp; conditions" first appears on Screen 06. "Hospitalisation sub-limits not configured" first appears on Screen 06. Both should have been flagged on Screen 02 (Extraction) — the moment AI extracted them.</p>
+        <div class="scope"><strong>Appears on:</strong> Screens 02 → 06 (the entire delay)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     UNIFIED RECOMMENDATIONS
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">08 — Unified recommendations</span>
+      <h2>Seven moves that compress the journey by 2×.</h2>
+      <p class="italic">Each recommendation targets a recurring theme. Applied together, they take Priya from "3-hour reality" back to the "1-hour design target".</p>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">01</div><h3>One progress model, not two.</h3></div>
+      <p>Pick the Builder Roadmap (5 stages) as the canonical model. Drop the 7-step pipeline strip on the Builder screens. Drop the 4-step stepper on the Extraction screens. Every screen shows one progress indicator, in one location.</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 02</span>
+        <span class="reco-screen-tag">Affects 03</span>
+        <span class="reco-screen-tag">Affects 04</span>
+        <span class="reco-screen-tag">Affects 05</span>
+      </div>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">02</div><h3>One unified confidence counter, same denominator throughout.</h3></div>
+      <p>From Screen 02 onwards, every screen carries the same chip: <strong>"21 to review · 2 critical · 109 verified"</strong>. Each token clickable, each linked to the underlying fields. No more "0 vs 30/30" contradictions.</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 02</span>
+        <span class="reco-screen-tag">Affects 04</span>
+        <span class="reco-screen-tag">Affects 06</span>
+      </div>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">03</div><h3>Replace the three product trees with one Extraction Health Heatmap.</h3></div>
+      <p>Centre canvas of the Builder Workspace becomes a 10×N grid of cells — one per field, colour-coded by confidence. Click a cell → jump to that field's edit form. Spot risk at a glance instead of clicking through three tree views.</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 04</span>
+        <span class="reco-screen-tag">Affects 05</span>
+      </div>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">04</div><h3>Replace the 4-tab right panel with one Live Activity feed.</h3></div>
+      <p>Tree / Extraction / Issues / Docs become a single scrollable list. Five event types: Critical · Warning · AI Hint · Suggestion · Verified. Filter chips at top. Each item carries its source citation and a one-click "Resolve →" action.</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 04</span>
+        <span class="reco-screen-tag">Affects 05</span>
+      </div>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">05</div><h3>Surface blockers from the moment they're detected.</h3></div>
+      <p>The "Not ready to publish · 2 errors" banner on Screen 06 should appear on Screen 02 (Extraction) the moment the AI flags those fields. User addresses them in flow, not at the gate. Eliminates "Post-hoc Shock".</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 02 → 06</span>
+      </div>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">06</div><h3>Every error gets a "what, where, why, fix" payload.</h3></div>
+      <p>Red items in the tree become structured: <em>title · subtitle · severity · source citation · inline Fix button</em>. Clicking "Fix" opens the right field in edit mode with the source passage highlighted. No more orphan red items.</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 04</span>
+        <span class="reco-screen-tag">Affects 05</span>
+        <span class="reco-screen-tag">Affects 06</span>
+      </div>
+    </div>
+
+    <div class="reco">
+      <div class="reco-head"><div class="reco-num">07</div><h3>Cross-plan comparison is the default, not the toggle.</h3></div>
+      <p>Wherever the user lands on a plan-specific value (Mini OPD, Medi OPD, Max OPD), show the values for the other two plans alongside automatically. Horizontal comparison bars on one axis. Mental diffing → visual diffing.</p>
+      <div class="reco-screens">
+        <span class="reco-screen-tag">Affects 03</span>
+        <span class="reco-screen-tag">Affects 04</span>
+        <span class="reco-screen-tag">Affects 05</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p class="italic">End-to-end journey audit · Eicore OneBuzz · Six screens, seven moves.</p>
+    <p style="margin-top:6px;">Authored alongside the redesign. Cross-referenced against the actuaria-insight Lovable reference and five "Project Research Overview" Figma variations.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Builder Workspace · UX Research & Heuristic Audit · Eicore OneBuzz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF6;
+    --surface: #FFFFFF;
+    --ink-1: #0B1220;
+    --ink-2: #475569;
+    --ink-3: #94A3B8;
+    --line: #E5E7EB;
+    --line-strong: #D1D5DB;
+    --brand: #047857;
+    --brand-2: #059669;
+    --brand-tint: #ECFDF5;
+    --critical: #DC2626;
+    --critical-tint: #FEE2E2;
+    --warning: #D97706;
+    --warning-tint: #FEF3C7;
+    --info: #2563EB;
+    --info-tint: #DBEAFE;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow-md: 0 4px 18px -2px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+    --shadow-lg: 0 12px 40px -8px rgba(15,23,42,.12), 0 2px 4px rgba(15,23,42,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink-1);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+  h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.018em; margin: 0; line-height: 1.18; }
+  h1 { font-size: 44px; letter-spacing: -0.025em; }
+  h2 { font-size: 28px; }
+  h3 { font-size: 20px; }
+  h4 { font-size: 15px; font-weight: 600; }
+  p { margin: 0; color: var(--ink-2); }
+  .italic { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--brand); text-transform: uppercase; }
+
+  /* ───── Hero ───── */
+  .hero { padding: 88px 0 64px; border-bottom: 1px solid var(--line); }
+  .hero .eyebrow { margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .hero .eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--brand); }
+  .hero h1 { max-width: 880px; }
+  .hero .sub { margin-top: 16px; font-size: 17px; line-height: 1.65; max-width: 760px; }
+  .hero .meta-row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .meta-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; background: #fff; border: 1px solid var(--line); color: var(--ink-2); }
+  .meta-chip strong { color: var(--ink-1); font-weight: 600; }
+  .stat-strip { margin-top: 48px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px; }
+  .stat-num { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .stat-num.crit { color: var(--critical); }
+  .stat-num.warn { color: var(--warning); }
+  .stat-num.brand { color: var(--brand); }
+  .stat-label { margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+
+  /* ───── Section ───── */
+  section { padding: 80px 0; border-bottom: 1px solid var(--line); }
+  .section-head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 42px; }
+  .section-head .italic { color: var(--ink-2); font-size: 17px; max-width: 720px; }
+
+  /* ───── Annotated screen ───── */
+  .screen-wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; align-items: start; }
+  .screen { position: relative; background: #E5E7EB; border-radius: 18px; padding: 14px; border: 1px solid var(--line-strong); box-shadow: var(--shadow-lg); }
+  .screen-inner { background: #FFFFFF; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; }
+  .topbar { height: 38px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 12px; gap: 10px; }
+  .topbar .title { font-size: 11.5px; font-weight: 600; }
+  .topbar .panel-icon { width: 16px; height: 16px; border: 1.5px solid var(--ink-3); border-radius: 3px; display: inline-block; position: relative; }
+  .topbar .panel-icon::before { content: ""; position: absolute; left: 2px; top: 1px; bottom: 1px; width: 3px; background: var(--ink-3); border-radius: 1px; }
+  .stepper-row { background: #fff; padding: 8px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 6px; align-items: center; font-size: 9.5px; font-weight: 500; flex-wrap: wrap; }
+  .step-done { color: var(--brand); display: flex; align-items: center; gap: 3px; }
+  .step-active { color: var(--brand); font-weight: 700; background: var(--brand-tint); padding: 2px 8px; border-radius: 999px; border: 1px solid #BBF7D0; display: flex; gap: 4px; align-items: center; }
+  .step-todo { color: var(--ink-3); }
+  .step-sep { color: var(--ink-3); }
+  .step-num { background: var(--brand); color: #fff; width: 13px; height: 13px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .cta-pill { margin-left: auto; background: var(--ink-1); color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 9.5px; font-weight: 600; }
+  .banner { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; margin: 8px 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 500; color: #92400E; }
+  .banner .right { margin-left: auto; background: #fff; border: 1px solid #FDE68A; color: #92400E; font-weight: 700; padding: 3px 8px; border-radius: 4px; font-size: 9px; }
+  .three-col { display: grid; grid-template-columns: 130px 1fr 200px; gap: 8px; padding: 8px 12px 14px; }
+  .col { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .col-title { font-size: 10px; font-weight: 700; margin-bottom: 8px; }
+  .col-eye { font-size: 8.5px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.1em; margin: 8px 0 4px; text-transform: uppercase; }
+  .nav-row { font-size: 9.5px; padding: 4px 6px; color: var(--ink-2); border-radius: 4px; display: flex; gap: 4px; align-items: center; }
+  .nav-row.active { background: var(--brand-tint); color: var(--brand); font-weight: 600; }
+  .nav-row .chk { width: 10px; height: 10px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 7px; display: inline-flex; align-items: center; justify-content: center; }
+  .plan-row { font-size: 9px; padding: 3px 6px; color: var(--ink-2); border-radius: 4px; display: flex; align-items: center; gap: 4px; }
+  .plan-row .dot-mini { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+  .plan-row .dot-medi { width: 6px; height: 6px; border-radius: 50%; background: #3B82F6; }
+  .plan-row .dot-max { width: 6px; height: 6px; border-radius: 50%; background: #A855F7; }
+  .cov-list { padding-left: 14px; display: flex; flex-direction: column; gap: 2px; }
+  .cov-row { font-size: 8.5px; padding: 2px 4px; color: var(--ink-2); }
+
+  .overview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .overview-head h4 { font-size: 13px; }
+  .mark-btn { background: var(--ink-1); color: #fff; padding: 3px 8px; font-size: 9px; border-radius: 4px; font-weight: 600; }
+  .ov-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .ov-card { background: #F9FAFB; border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+  .ov-card .big { font-size: 18px; font-weight: 700; color: var(--brand); }
+  .ov-card .lbl { font-size: 9px; color: var(--ink-2); margin-top: 2px; }
+  .plan-variants { font-size: 10px; font-weight: 700; margin-bottom: 6px; }
+  .pv-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .pv-card { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+  .pv-name { font-size: 10px; font-weight: 700; }
+  .pv-row { font-size: 8.5px; color: var(--ink-2); display: flex; justify-content: space-between; margin-top: 4px; }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--line); margin: -10px -10px 8px; }
+  .tab { flex: 1; text-align: center; padding: 7px 4px; font-size: 8.5px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+  .tree-row { font-size: 9.5px; padding: 3px 4px; display: flex; align-items: center; gap: 4px; color: var(--ink-2); }
+  .tree-row.head { font-weight: 700; color: var(--ink-1); background: var(--brand-tint); border: 1px solid #BBF7D0; padding: 5px 6px; border-radius: 4px; margin-bottom: 4px; }
+  .tree-indent { padding-left: 12px; }
+  .tree-indent-2 { padding-left: 24px; }
+  .red-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--critical); }
+  .red-item { color: var(--critical); font-weight: 500; }
+
+  /* ───── Annotation pins ───── */
+  .pin { position: absolute; width: 26px; height: 26px; background: var(--critical); color: #fff; border: 2.5px solid #fff; border-radius: 50% 50% 50% 4px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(220,38,38,.45); z-index: 5; cursor: help; transform: translate(-50%, -100%); transition: transform .15s; }
+  .pin:hover { transform: translate(-50%, -100%) scale(1.12); }
+  .pin.amber { background: var(--warning); box-shadow: 0 3px 10px rgba(217,119,6,.45); }
+
+  /* ───── Annotation legend ───── */
+  .legend { display: flex; flex-direction: column; gap: 12px; }
+  .legend-item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; }
+  .legend-num { flex-shrink: 0; width: 26px; height: 26px; background: var(--critical); color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .legend-item.amber .legend-num { background: var(--warning); }
+  .legend-body h4 { font-size: 13.5px; margin-bottom: 4px; }
+  .legend-body p { font-size: 13px; line-height: 1.55; }
+  .h-tag { display: inline-block; background: var(--brand-tint); color: var(--brand); padding: 1px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 6px; }
+
+  /* ───── Heuristics table ───── */
+  .heur-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .heur-row { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; display: grid; grid-template-columns: 40px 1fr 100px; gap: 22px; align-items: center; }
+  .heur-id { font-family: 'Playfair Display', serif; font-style: italic; font-size: 18px; color: var(--ink-3); }
+  .heur-mid h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .heur-mid p { font-size: 13.5px; line-height: 1.55; }
+  .sev { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
+  .sev.high { background: var(--critical-tint); color: var(--critical); }
+  .sev.med { background: var(--warning-tint); color: var(--warning); }
+  .sev.low { background: var(--info-tint); color: var(--info); }
+  .sev-strip { display: flex; gap: 6px; margin-top: 12px; }
+  .sev-bar { height: 10px; border-radius: 2px; }
+  .sev-bar.high { background: var(--critical); flex: 5; }
+  .sev-bar.med { background: var(--warning); flex: 4; }
+  .sev-bar.low { background: var(--info); flex: 1; }
+  .sev-leg { display: flex; gap: 18px; margin-top: 10px; font-size: 12px; color: var(--ink-2); }
+  .sev-leg .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+  .sev-leg .dot.h { background: var(--critical); }
+  .sev-leg .dot.m { background: var(--warning); }
+  .sev-leg .dot.l { background: var(--info); }
+
+  /* ───── Persona ───── */
+  .persona { background: linear-gradient(120deg, #FFFFFF 0%, #F0FDF4 100%); border: 1px solid var(--line); border-radius: 18px; padding: 32px; display: grid; grid-template-columns: 150px 1fr; gap: 32px; align-items: start; }
+  .avatar { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #10B981); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; box-shadow: var(--shadow-md); }
+  .persona-body h3 { font-size: 24px; margin-bottom: 4px; }
+  .persona-body .role { color: var(--brand); font-weight: 600; margin-bottom: 16px; }
+  .persona-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 14px; }
+  .persona-cell h5 { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 6px; }
+  .persona-cell p { font-size: 13.5px; }
+
+  /* ───── Journey ───── */
+  .journey-track { position: relative; padding-left: 32px; }
+  .journey-track::before { content: ""; position: absolute; left: 12px; top: 14px; bottom: 14px; width: 2px; background: var(--line); }
+  .j-step { position: relative; padding: 12px 0 18px 22px; }
+  .j-step::before { content: attr(data-step); position: absolute; left: -32px; top: 8px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--brand); color: var(--brand); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .j-step .j-head { font-size: 14.5px; font-weight: 600; color: var(--ink-1); margin-bottom: 4px; }
+  .j-step .j-body { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+  .j-friction { margin-top: 8px; padding: 8px 12px; background: var(--critical-tint); border-left: 3px solid var(--critical); border-radius: 4px; font-size: 12.5px; color: #7F1D1D; display: flex; gap: 8px; }
+  .j-friction::before { content: "⚠"; font-weight: 700; }
+  .time-bar { margin-top: 32px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; }
+  .time-bar h4 { font-size: 13px; margin-bottom: 12px; }
+  .tb-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .tb-label { width: 110px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .tb-track { flex: 1; height: 8px; background: #F1F5F9; border-radius: 4px; position: relative; overflow: hidden; }
+  .tb-fill { height: 100%; border-radius: 4px; }
+  .tb-fill.planned { width: 33%; background: var(--brand); }
+  .tb-fill.actual { width: 85%; background: var(--critical); }
+  .tb-val { width: 60px; text-align: right; font-size: 12px; font-weight: 600; color: var(--ink-1); }
+
+  /* ───── Pain points ───── */
+  .pains { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pain { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; position: relative; }
+  .pain-num { position: absolute; top: 16px; right: 18px; font-family: 'Playfair Display', serif; font-style: italic; font-size: 36px; font-weight: 600; color: #F1F5F9; line-height: 1; }
+  .pain-q { font-size: 16px; font-weight: 600; color: var(--ink-1); margin-bottom: 6px; max-width: 320px; }
+  .pain-body { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+  .pain-tags { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .pain-tag { background: var(--critical-tint); color: var(--critical); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 700; }
+
+  /* ───── Solutions ───── */
+  .solutions { display: flex; flex-direction: column; gap: 14px; }
+  .sol { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 24px; align-items: start; }
+  .sol-num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 44px; color: var(--brand); line-height: 1; }
+  .sol-col h5 { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 6px; }
+  .sol-col p { font-size: 13.5px; color: var(--ink-1); line-height: 1.55; }
+  .sol-col.problem p { color: var(--critical); }
+  .sol-col.move p { color: var(--ink-1); font-weight: 500; }
+  .sol-col.ref p { color: var(--ink-2); font-style: italic; }
+
+  /* ───── Decisions ───── */
+  .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .decision { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+  .decision .q-num { color: var(--brand); font-weight: 700; font-size: 12px; letter-spacing: 0.1em; }
+  .decision h4 { font-size: 16px; margin: 6px 0 10px; }
+  .decision p { font-size: 13px; color: var(--ink-2); }
+  .opts { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .opt { font-size: 12.5px; color: var(--ink-1); padding: 6px 12px; background: var(--bg); border-radius: 6px; }
+  .opt strong { color: var(--brand); }
+
+  footer { padding: 60px 0 80px; text-align: center; color: var(--ink-3); font-size: 13px; }
+  footer .italic { color: var(--ink-2); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">UX Research · Heuristic Audit · Builder Workspace</div>
+    <h1>Why the Builder screen makes a 30-minute task take an hour.</h1>
+    <p class="sub">A heuristic audit, persona-driven journey map, and a set of evidence-anchored solutions for the right-panel restructure of the Eicore OneBuzz Product Plan Builder. Findings cross-referenced against the actuaria-insight Lovable reference and five "Project Research Overview" variations on the Figma canvas.</p>
+    <div class="meta-row">
+      <span class="meta-chip">📅 <strong>30 May 2026</strong></span>
+      <span class="meta-chip">🔍 <strong>Nielsen's 10 + domain audit</strong></span>
+      <span class="meta-chip">👤 Persona <strong>Priya · Sr. Actuarial Analyst</strong></span>
+      <span class="meta-chip">🎯 Scope <strong>Builder Workspace (Stage 3 of 5)</strong></span>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-num crit">5</div>
+        <div class="stat-label">High-severity heuristic violations identified on a single screen</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num warn">3×</div>
+        <div class="stat-label">The product tree is rendered three times on one screen</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num crit">~2×</div>
+        <div class="stat-label">Time-on-screen vs designed estimate (30 min → 60–90 min)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num brand">5</div>
+        <div class="stat-label">Top pain points · 5 evidence-anchored solutions proposed</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 1 — Annotated Screen
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">01 — What the user sees today</span>
+      <h2>The current Builder Workspace, annotated.</h2>
+      <p class="italic">Ten numbered problems pinned to the live screen. Hover for the quick read; the legend below details each one and the heuristic it violates.</p>
+    </div>
+
+    <div class="screen-wrap">
+      <!-- ── Recreated screen ── -->
+      <div class="screen">
+        <div class="screen-inner">
+
+          <!-- Top app bar -->
+          <div class="topbar">
+            <span class="title">Product Plan Builder</span>
+            <span class="panel-icon"></span>
+            <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+              <span style="font-size:9.5px; color:var(--ink-3);">Prototype  |  Case Study</span>
+            </div>
+          </div>
+
+          <!-- Stepper row -->
+          <div class="stepper-row">
+            <span class="step-done">✓ Config Product</span>
+            <span class="step-sep">›</span>
+            <span class="step-done">✓ Config Rules</span>
+            <span class="step-sep">›</span>
+            <span class="step-done">✓ Config Rating</span>
+            <span class="step-sep">›</span>
+            <span class="step-active"><span class="step-num">4</span> Issues Resolved</span>
+            <span class="step-sep">›</span>
+            <span class="step-todo">Product Review</span>
+            <span class="step-sep">›</span>
+            <span class="step-todo">Approved</span>
+            <span class="step-sep">›</span>
+            <span class="step-todo">Published</span>
+            <span class="cta-pill">Proceed to Review →</span>
+          </div>
+
+          <!-- Yellow banner -->
+          <div class="banner">
+            ⓘ Next: Verify extracted fields for <strong>OPD Cover · in Mini</strong>
+            <span class="right">Needs Attention → 30/30</span>
+          </div>
+
+          <!-- 3-col content -->
+          <div class="three-col">
+
+            <!-- Left rail -->
+            <div class="col">
+              <div class="col-title">D.I.Y Health Insurance</div>
+              <div class="col-eye">Navigation</div>
+              <div class="nav-row active">Overview</div>
+              <div class="nav-row"><span class="chk">✓</span> Basic Details</div>
+              <div class="nav-row"><span class="chk">✓</span> Questions</div>
+              <div class="nav-row"><span class="chk">✓</span> Exclusions</div>
+              <div class="col-eye">Plans +</div>
+              <div class="plan-row">▾ <span class="dot-mini"></span> Mini</div>
+              <div class="cov-list">
+                <div class="cov-row">Organ Donor Expenses</div>
+                <div class="cov-row">Cumulative Bonus</div>
+                <div class="cov-row">Restoration of Sum Insured</div>
+                <div class="cov-row">ICU Charges</div>
+                <div class="cov-row">Room Rent (Normal Room)</div>
+                <div class="cov-row">Wellness Benefits</div>
+                <div class="cov-row">Cataract Surgery</div>
+                <div class="cov-row">OPD Cover</div>
+              </div>
+              <div class="plan-row">▸ <span class="dot-medi"></span> Medi</div>
+              <div class="plan-row">▸ <span class="dot-max"></span> Max</div>
+            </div>
+
+            <!-- Middle Builder Overview -->
+            <div class="col">
+              <div class="overview-head">
+                <h4>Builder Overview</h4>
+                <span class="mark-btn">✓ Mark Reviewed (0/151)</span>
+              </div>
+              <div class="ov-cards">
+                <div class="ov-card">
+                  <div class="big">89%</div>
+                  <div class="lbl">145 of 155 fields extracted · <span style="color:var(--brand);">0 fields need review · 0 sections flagged</span></div>
+                </div>
+                <div class="ov-card">
+                  <div style="font-size:10px; font-weight:700; margin-bottom:4px;">Product Summary</div>
+                  <div style="font-size:9.5px; color:var(--ink-2); display:flex; justify-content:space-between; padding:2px 0;"><span>Plans</span><span style="color:var(--ink-1); font-weight:500;">3 Variants</span></div>
+                  <div style="font-size:9.5px; color:var(--ink-2); display:flex; justify-content:space-between; padding:2px 0;"><span>Sum Insured</span><span style="color:var(--ink-1); font-weight:500;">₹4L – ₹15L</span></div>
+                  <div style="font-size:9.5px; color:var(--ink-2); display:flex; justify-content:space-between; padding:2px 0;"><span>Coverages</span><span style="color:var(--ink-1); font-weight:500;">111 Total</span></div>
+                </div>
+              </div>
+              <div class="plan-variants">Plan Variants</div>
+              <div class="pv-grid">
+                <div class="pv-card">
+                  <div class="pv-name">Mini <span style="float:right; font-size:8px; background:#F1F5F9; padding:1px 5px; border-radius:3px; color:var(--ink-2);">Plan</span></div>
+                  <div class="pv-row"><span>Plan Limits</span><span>1</span></div>
+                  <div class="pv-row"><span>Member Details</span><span>6</span></div>
+                  <div class="pv-row"><span>Premium Raters</span><span>3</span></div>
+                  <div class="pv-row"><span>Coverages</span><span>37</span></div>
+                </div>
+                <div class="pv-card">
+                  <div class="pv-name">Medi <span style="float:right; font-size:8px; background:#F1F5F9; padding:1px 5px; border-radius:3px; color:var(--ink-2);">Plan</span></div>
+                  <div class="pv-row"><span>Plan Limits</span><span>1</span></div>
+                  <div class="pv-row"><span>Member Details</span><span>6</span></div>
+                  <div class="pv-row"><span>Premium Raters</span><span>3</span></div>
+                  <div class="pv-row"><span>Coverages</span><span>37</span></div>
+                </div>
+                <div class="pv-card">
+                  <div class="pv-name">Max <span style="float:right; font-size:8px; background:#F1F5F9; padding:1px 5px; border-radius:3px; color:var(--ink-2);">Plan</span></div>
+                  <div class="pv-row"><span>Plan Limits</span><span>1</span></div>
+                  <div class="pv-row"><span>Member Details</span><span>6</span></div>
+                  <div class="pv-row"><span>Premium Raters</span><span>3</span></div>
+                  <div class="pv-row"><span>Coverages</span><span>37</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right panel (Tree tab) -->
+            <div class="col">
+              <div class="tabs">
+                <div class="tab active">Tree</div>
+                <div class="tab">Extr.</div>
+                <div class="tab">Iss.</div>
+                <div class="tab">Docs</div>
+              </div>
+              <div class="tree-row head">⌥ D.I.Y Health Insurance</div>
+              <div class="tree-row" style="font-weight:600;">▾ Plans</div>
+              <div class="tree-row tree-indent" style="color:var(--brand); font-weight:600;">▾ Mini</div>
+              <div class="tree-row tree-indent-2">▸ Plan Limits</div>
+              <div class="tree-row tree-indent-2">▸ Member Details</div>
+              <div class="tree-row tree-indent-2">▸ Coverages</div>
+              <div class="tree-row tree-indent-2">▾ Premium Raters</div>
+              <div class="tree-row tree-indent-2 red-item" style="padding-left:30px;"><span class="red-dot"></span> Age (Missing)</div>
+              <div class="tree-row tree-indent-2 red-item" style="padding-left:30px;"><span class="red-dot"></span> Family Construct</div>
+              <div class="tree-row tree-indent-2 red-item" style="padding-left:30px;"><span class="red-dot"></span> Pre-existing</div>
+              <div class="tree-row tree-indent">▸ Medi</div>
+              <div class="tree-row tree-indent">▸ Max</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── Annotation pins ── -->
+        <div class="pin" style="top:90px; left:50%;">1</div>
+        <div class="pin" style="top:90px; left:82%;">2</div>
+        <div class="pin" style="top:64px; left:50%;">3</div>
+        <div class="pin" style="top:200px; left:10%;">4</div>
+        <div class="pin" style="top:320px; left:54%;">5</div>
+        <div class="pin" style="top:200px; left:88%;">6</div>
+        <div class="pin" style="top:175px; left:78%;">7</div>
+        <div class="pin amber" style="top:155px; left:43%;">8</div>
+        <div class="pin amber" style="top:295px; left:11%;">9</div>
+        <div class="pin" style="top:370px; left:91%;">10</div>
+      </div>
+
+      <!-- ── Legend ── -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-num">1</div>
+          <div class="legend-body">
+            <h4>Contradictory status: "30 needs attention"</h4>
+            <p>The yellow banner says <strong>"Needs Attention → 30/30"</strong>. Right next to it, the overview says <strong>"0 fields need review · 0 sections flagged"</strong>. User can't tell if work is left.</p>
+            <span class="h-tag">H1 · Visibility of system status</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">2</div>
+          <div class="legend-body">
+            <h4>Ambiguous "30/30" count</h4>
+            <p>Is it 30 of 30 done? 30 remaining? The denominator doesn't match the numerator semantics in any reading.</p>
+            <span class="h-tag">H9 · Error recognition</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">3</div>
+          <div class="legend-body">
+            <h4>Two competing progress models</h4>
+            <p>The <strong>5-stage Builder Roadmap</strong> (left rail) and the <strong>7-step pipeline stepper</strong> (this row) both claim to show "where you are". User picks one, then keeps re-checking the other.</p>
+            <span class="h-tag">H4 · Consistency & standards</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">4</div>
+          <div class="legend-body">
+            <h4>Product tree, copy #1 of 3</h4>
+            <p>Left rail shows Plans → Coverages as a navigation tree.</p>
+            <span class="h-tag">H8 · Aesthetic & minimalist</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">5</div>
+          <div class="legend-body">
+            <h4>Product tree, copy #2 of 3</h4>
+            <p>The middle Plan Variants cards re-render the same structural data (Plan Limits / Member Details / Premium Raters / Coverages) with counts.</p>
+            <span class="h-tag">H8 · Aesthetic & minimalist</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">6</div>
+          <div class="legend-body">
+            <h4>Product tree, copy #3 of 3</h4>
+            <p>The right panel's "Tree" tab renders the structure a third time. Three copies of the same hierarchy on one screen.</p>
+            <span class="h-tag">H8 · Aesthetic & minimalist</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">7</div>
+          <div class="legend-body">
+            <h4>4-tab panel fights for attention</h4>
+            <p>Tree · Extraction · Issues · Docs — four competing surfaces. Each tab switch loses the user's context in the others.</p>
+            <span class="h-tag">H7 · Flexibility & efficiency</span>
+          </div>
+        </div>
+        <div class="legend-item amber">
+          <div class="legend-num">8</div>
+          <div class="legend-body">
+            <h4>Bulk action with no confirmation</h4>
+            <p>"Mark Reviewed (0/151)" — one click could mark all 151 fields verified with no preview, no undo path shown.</p>
+            <span class="h-tag">H5 · Error prevention</span>
+          </div>
+        </div>
+        <div class="legend-item amber">
+          <div class="legend-num">9</div>
+          <div class="legend-body">
+            <h4>37-coverage flat list</h4>
+            <p>The Mini plan has 37 coverages dumped as a flat alphabetical list. No filter, no grouping, no jump-to-issue. Scrolling fatigue.</p>
+            <span class="h-tag">H6 · Recognition over recall</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-num">10</div>
+          <div class="legend-body">
+            <h4>Red items lack actionable context</h4>
+            <p>"Age (Missing)" · "Family Construct" · "Pre-existing" — coloured red but no inline explanation of <em>what</em> to do, <em>where</em> the fix is, or <em>why</em> it matters.</p>
+            <span class="h-tag">H9 · Error recognition</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 2 — Heuristic Audit
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">02 — Heuristic audit</span>
+      <h2>Nielsen's 10, scored against the live screen.</h2>
+      <p class="italic">A formal audit of the screen against Jakob Nielsen's ten usability heuristics. Severity assigned by frequency × user impact × disruption to the core task.</p>
+    </div>
+
+    <div class="sev-strip">
+      <div class="sev-bar high"></div>
+      <div class="sev-bar med"></div>
+      <div class="sev-bar low"></div>
+    </div>
+    <div class="sev-leg">
+      <span><span class="dot h"></span>5 High</span>
+      <span><span class="dot m"></span>4 Medium</span>
+      <span><span class="dot l"></span>1 Low</span>
+    </div>
+
+    <div class="heur-grid" style="margin-top:32px;">
+      <div class="heur-row">
+        <div class="heur-id">H1</div>
+        <div class="heur-mid">
+          <h4>Visibility of system status</h4>
+          <p>Banner says <strong>30 fields need attention</strong>, but the overview right next to it says <strong>0 fields need review</strong>. Two truths on one screen.</p>
+        </div>
+        <div class="sev high">High</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H2</div>
+        <div class="heur-mid">
+          <h4>Match between system and real world</h4>
+          <p>The stepper mixes action labels (Config Product, Config Rules) with status labels (Approved, Published). The number "4" next to "Issues Resolved" is ambiguous.</p>
+        </div>
+        <div class="sev med">Medium</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H3</div>
+        <div class="heur-mid">
+          <h4>User control & freedom</h4>
+          <p>No visible undo for Mark Reviewed. No filter on the 37-item coverage list. No "back to last edited" affordance.</p>
+        </div>
+        <div class="sev med">Medium</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H4</div>
+        <div class="heur-mid">
+          <h4>Consistency & standards</h4>
+          <p>Two parallel navigation systems on one screen: the 5-stage Builder Roadmap on the left, and the 7-step stepper at the top. Both signal "where you are." User splits attention.</p>
+        </div>
+        <div class="sev high">High</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H5</div>
+        <div class="heur-mid">
+          <h4>Error prevention</h4>
+          <p>"Mark Reviewed (0/151)" is a one-click bulk action with no confirmation or preview of what's being marked.</p>
+        </div>
+        <div class="sev med">Medium</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H6</div>
+        <div class="heur-mid">
+          <h4>Recognition over recall</h4>
+          <p>To compare Mini's OPD limit to Medi's, the user must navigate twice and hold both values in memory. Coverages aren't grouped by category. No mental hooks.</p>
+        </div>
+        <div class="sev high">High</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H7</div>
+        <div class="heur-mid">
+          <h4>Flexibility & efficiency</h4>
+          <p>No "next issue" jump. No keyboard shortcuts. No bulk verify. No filter chips to focus on low-confidence fields only.</p>
+        </div>
+        <div class="sev med">Medium</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H8</div>
+        <div class="heur-mid">
+          <h4>Aesthetic & minimalist design</h4>
+          <p>The product structure is rendered three times on one screen — left rail nav, middle Plan Variants cards, right Tree tab. Triple redundancy.</p>
+        </div>
+        <div class="sev high">High</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H9</div>
+        <div class="heur-mid">
+          <h4>Help recognize & recover from errors</h4>
+          <p>Red items appear in the Tree (Age Missing, Family Construct, Pre-existing) but offer no inline explanation of what to do, where to fix it, or why it matters.</p>
+        </div>
+        <div class="sev high">High</div>
+      </div>
+      <div class="heur-row">
+        <div class="heur-id">H10</div>
+        <div class="heur-mid">
+          <h4>Help & documentation</h4>
+          <p>No tooltips on metrics. No "what does 89% mean?" affordance. No first-time-user nudge.</p>
+        </div>
+        <div class="sev low">Low</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 3 — Persona
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">03 — The user</span>
+      <h2>Priya — Senior Actuarial Analyst.</h2>
+      <p class="italic">Composite persona built from the assignment brief, the existing case-study notes, and standard B2B insurance personas. Her shift is what we're optimising for.</p>
+    </div>
+
+    <div class="persona">
+      <div class="avatar">P</div>
+      <div class="persona-body">
+        <h3>Priya Krishnamurthy</h3>
+        <div class="role">Senior Actuarial Analyst · Generali India</div>
+        <p style="font-size:14.5px;">Configures 3 health products per quarter. Receives the AI-extracted draft from the underwriting team. Her job is to verify every field against the source BRD, fix what's wrong, and approve before it goes to compliance. Each product gets ~4 hours of her time.</p>
+        <div class="persona-grid">
+          <div class="persona-cell">
+            <h5>Motivations</h5>
+            <p>Absolute data integrity. A 1% loading error or a misread co-pay bracket can cost millions. Wants speed without sacrificing precision.</p>
+          </div>
+          <div class="persona-cell">
+            <h5>Frustrations</h5>
+            <p>Hunting through dense forms. Toggling between Mini and Medi to spot inconsistencies. No clear "what's next" when she's verified ten fields.</p>
+          </div>
+          <div class="persona-cell">
+            <h5>Success looks like</h5>
+            <p>"I can see exactly what the AI got right, what it got wrong, and where to look in the source — all in one view."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 4 — As-is journey
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">04 — As-is journey</span>
+      <h2>Priya's first 30 minutes on the screen.</h2>
+      <p class="italic">Mapped from the live screen, the 5 figma variations, and the 5 wireframe-annotation frames already pinned on the Eicore page. Friction points are highlighted in red.</p>
+    </div>
+
+    <div class="journey-track">
+      <div class="j-step" data-step="1">
+        <div class="j-head">Lands on Builder Overview</div>
+        <div class="j-body">Sees the 89% extraction stat and feels reassured.</div>
+        <div class="j-friction">Then reads "30/30 needs attention" alongside "0 fields need review" — stops to figure out which is true. <strong>30 seconds wasted on orientation.</strong></div>
+      </div>
+      <div class="j-step" data-step="2">
+        <div class="j-head">Looks for the first critical issue</div>
+        <div class="j-body">Wants to start with the highest-risk field.</div>
+        <div class="j-friction">No prioritised worklist. Spots three red dots in the right Tree tab — but those are Premium Raters, not Coverages. Wrong path. Backs out.</div>
+      </div>
+      <div class="j-step" data-step="3">
+        <div class="j-head">Switches to the Issues tab</div>
+        <div class="j-body">Hopes the Issues tab shows a triaged list.</div>
+        <div class="j-friction">Tab switch loses the Tree context. List is flat — no severity grouping, no plan grouping. Each row has to be read fully to know what it is.</div>
+      </div>
+      <div class="j-step" data-step="4">
+        <div class="j-head">Opens OPD Cover (Mini) form</div>
+        <div class="j-body">Clicks an issue, form opens in the middle.</div>
+        <div class="j-friction">Form <em>replaces</em> the Builder Overview entirely. The 89% / progress context disappears. To check overall progress she has to navigate back.</div>
+      </div>
+      <div class="j-step" data-step="5">
+        <div class="j-head">Verifies the value</div>
+        <div class="j-body">Reads BRD source via the doc inspector. Clicks Accept &amp; Verify.</div>
+        <div class="j-friction">After accepting, she's still on the form. No "next field" auto-advance. Has to manually find the next item in the 37-coverage list.</div>
+      </div>
+      <div class="j-step" data-step="6">
+        <div class="j-head">Tries to compare Mini vs Medi</div>
+        <div class="j-body">Wants to check OPD limit progression across plans makes sense.</div>
+        <div class="j-friction">No comparison view. Must click Medi → re-find OPD → mentally diff against the Mini value she just verified. Easy to miss inconsistencies that could cost millions.</div>
+      </div>
+      <div class="j-step" data-step="7">
+        <div class="j-head">Loses count</div>
+        <div class="j-body">After ~10 fields verified, wonders how many remain.</div>
+        <div class="j-friction">Yellow banner doesn't visibly update. The "0 fields need review" was wrong from the start. Only honest counter is "Mark Reviewed (0/151)" — but it's a button, not a status.</div>
+      </div>
+      <div class="j-step" data-step="8">
+        <div class="j-head">Hands off to junior teammate</div>
+        <div class="j-body">Submits half-done config for completion.</div>
+        <div class="j-friction"><strong>Zero activity history.</strong> Junior has no idea which fields Priya touched, which she intentionally skipped, or her reasoning.</div>
+      </div>
+    </div>
+
+    <div class="time-bar">
+      <h4>Time on screen — designed vs observed</h4>
+      <div class="tb-row">
+        <div class="tb-label">Designed for</div>
+        <div class="tb-track"><div class="tb-fill planned"></div></div>
+        <div class="tb-val">~30 min</div>
+      </div>
+      <div class="tb-row">
+        <div class="tb-label">In practice</div>
+        <div class="tb-track"><div class="tb-fill actual"></div></div>
+        <div class="tb-val">~60–90 min</div>
+      </div>
+      <p style="margin-top:14px; font-size:12.5px; color:var(--ink-2);"><strong>Why the slip:</strong> repeated re-orientation between two progress models, mental cross-plan diffing, and ambiguous status messaging. None of the slip is from the actual work of reading the BRD — it's from the UI getting in the way.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 5 — Pain points
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">05 — Synthesised pain points</span>
+      <h2>What Priya actually says, distilled.</h2>
+      <p class="italic">Five core questions the screen fails to answer cleanly. Each maps back to one or more heuristic violations.</p>
+    </div>
+
+    <div class="pains">
+      <div class="pain">
+        <div class="pain-num">01</div>
+        <div class="pain-q">"Where am I, and how much is left?"</div>
+        <div class="pain-body">Two competing progress models contradict each other. The honest counter is hidden inside a button label.</div>
+        <div class="pain-tags"><span class="pain-tag">H1</span><span class="pain-tag">H4</span></div>
+      </div>
+      <div class="pain">
+        <div class="pain-num">02</div>
+        <div class="pain-q">"Which one should I look at first?"</div>
+        <div class="pain-body">No prioritised worklist. 30 needs-attention fields exist but aren't surfaced as a single triagable surface. User does the triage themselves, mentally.</div>
+        <div class="pain-tags"><span class="pain-tag">H6</span><span class="pain-tag">H9</span></div>
+      </div>
+      <div class="pain">
+        <div class="pain-num">03</div>
+        <div class="pain-q">"How does this compare across Mini, Medi, Max?"</div>
+        <div class="pain-body">No cross-plan comparison view. Diffing happens in the user's head — exactly where errors creep in unnoticed.</div>
+        <div class="pain-tags"><span class="pain-tag">H6</span></div>
+      </div>
+      <div class="pain">
+        <div class="pain-num">04</div>
+        <div class="pain-q">"What's broken vs what's just low confidence?"</div>
+        <div class="pain-body">Issues panel mixes blockers, warnings, and "needs review" without severity bands or types. Everything looks equally urgent — or equally not.</div>
+        <div class="pain-tags"><span class="pain-tag">H9</span></div>
+      </div>
+      <div class="pain">
+        <div class="pain-num">05</div>
+        <div class="pain-q">"What did I just do — and what did the AI do?"</div>
+        <div class="pain-body">No activity history, no audit trail, no "what changed and by whom." Handoffs lose all the prior reviewer's reasoning.</div>
+        <div class="pain-tags"><span class="pain-tag">missing</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 6 — Proposed solutions
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">06 — Proposed solutions</span>
+      <h2>Five moves, anchored to what you already explored.</h2>
+      <p class="italic">Each solution is cross-referenced to the actuaria-insight Lovable reference or one of the five "Project Research Overview" variations on your Figma canvas. Nothing here is invented — your sketches converged on these patterns.</p>
+    </div>
+
+    <div class="solutions">
+      <div class="sol">
+        <div class="sol-num">01</div>
+        <div class="sol-col problem">
+          <h5>Problem</h5>
+          <p>Two progress models contradict each other.</p>
+        </div>
+        <div class="sol-col move">
+          <h5>The move</h5>
+          <p>Kill the duplicate top stepper. Promote a single honest header chip: <strong>21 to review · 2 critical · 109 verified.</strong> The Builder Roadmap on the left rail keeps stage tracking.</p>
+        </div>
+        <div class="sol-col ref">
+          <h5>Anchored in</h5>
+          <p>Actuaria reference top-left summary chip; your variation #1's header strip.</p>
+        </div>
+      </div>
+      <div class="sol">
+        <div class="sol-num">02</div>
+        <div class="sol-col problem">
+          <h5>Problem</h5>
+          <p>No prioritised worklist for the 30 "needs attention" fields.</p>
+        </div>
+        <div class="sol-col move">
+          <h5>The move</h5>
+          <p>Replace the middle Plan Variants cards with an <strong>Extraction Health Heatmap</strong> — a 10×N grid of colour-coded cells, one per field. Click a cell → jump straight to the edit form.</p>
+        </div>
+        <div class="sol-col ref">
+          <h5>Anchored in</h5>
+          <p>The dense heatmap in the actuaria-insight Builder reference (centre of screen).</p>
+        </div>
+      </div>
+      <div class="sol">
+        <div class="sol-num">03</div>
+        <div class="sol-col problem">
+          <h5>Problem</h5>
+          <p>No cross-plan comparison view.</p>
+        </div>
+        <div class="sol-col move">
+          <h5>The move</h5>
+          <p>Below the heatmap, add <strong>Coverage Comparison Bars</strong> — horizontal bars showing Mini / Medi / Max values on a shared axis. One row per parameter. Mental diffing → visual diffing.</p>
+        </div>
+        <div class="sol-col ref">
+          <h5>Anchored in</h5>
+          <p>The In-patient / ICU / OPD bar rows in your "Project Research Overview" variation #4.</p>
+        </div>
+      </div>
+      <div class="sol">
+        <div class="sol-num">04</div>
+        <div class="sol-col problem">
+          <h5>Problem</h5>
+          <p>4-tab right panel forces tab-switching and loses context.</p>
+        </div>
+        <div class="sol-col move">
+          <h5>The move</h5>
+          <p>Replace with a single <strong>Live Activity feed</strong> — Issue · AI Hint · Suggestion · Verified — with filter chips at the top. One scrollable list, no tab switches.</p>
+        </div>
+        <div class="sol-col ref">
+          <h5>Anchored in</h5>
+          <p>The right-side Activity Feed in actuaria + all 5 of your "Project Research Overview" variations.</p>
+        </div>
+      </div>
+      <div class="sol">
+        <div class="sol-num">05</div>
+        <div class="sol-col problem">
+          <h5>Problem</h5>
+          <p>No activity history.</p>
+        </div>
+        <div class="sol-col move">
+          <h5>The move</h5>
+          <p>Add a <strong>"Recent activity" stripe at the bottom of the feed</strong>: "Priya verified Mini OPD · 2 min ago" / "AI re-extracted Floater basis · 4h ago". Comments from the existing CommentsLayer can flow into this same feed.</p>
+        </div>
+        <div class="sol-col ref">
+          <h5>Anchored in</h5>
+          <p>Activity rows visible in your variations #2 and #3; ties into the comments feature already shipped.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 7 — Decisions needed
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">07 — Before code</span>
+      <h2>Four decisions to lock direction.</h2>
+      <p class="italic">Once these are answered, I'll write the data model, component spec, and screen-state diagram for the right-panel restructure — then build.</p>
+    </div>
+
+    <div class="decision-grid">
+      <div class="decision">
+        <div class="q-num">Q1</div>
+        <h4>Scope of this iteration</h4>
+        <p>The right panel alone, or the right panel + the centre Builder Overview (the 89% / Plan Variants cards)?</p>
+        <div class="opts">
+          <div class="opt"><strong>A.</strong> Right panel only — tightest scope</div>
+          <div class="opt"><strong>B.</strong> Right panel + centre overview — coupled changes</div>
+        </div>
+      </div>
+      <div class="decision">
+        <div class="q-num">Q2</div>
+        <h4>Name of the right panel</h4>
+        <p>"Product Tree" is the current name. Variations called it different things.</p>
+        <div class="opts">
+          <div class="opt"><strong>A.</strong> "Live Activity" — matches the feed treatment</div>
+          <div class="opt"><strong>B.</strong> "Workspace Activity" — broader</div>
+          <div class="opt"><strong>C.</strong> Keep "Product Tree" — name discipline</div>
+        </div>
+      </div>
+      <div class="decision">
+        <div class="q-num">Q3</div>
+        <h4>Heatmap cell granularity</h4>
+        <p>If we add the extraction heatmap, what's one cell?</p>
+        <div class="opts">
+          <div class="opt"><strong>A.</strong> One field (~155 cells) — exhaustive, dense</div>
+          <div class="opt"><strong>B.</strong> One parameter group (~30 cells) — easier to triage</div>
+        </div>
+      </div>
+      <div class="decision">
+        <div class="q-num">Q4</div>
+        <h4>AI Hints — in scope now or v2?</h4>
+        <p>Do we ship AI hints alongside issues + verified in the activity feed, or save them for v2?</p>
+        <div class="opts">
+          <div class="opt"><strong>A.</strong> In scope — full pattern</div>
+          <div class="opt"><strong>B.</strong> v2 — ship issues + verified first, then layer hints</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p class="italic">Builder Workspace · UX Heuristic Audit · Eicore OneBuzz</p>
+    <p style="margin-top:6px;">Authored alongside the redesign. Cross-referenced against the actuaria-insight Lovable reference and five "Project Research Overview" variations on the Figma canvas.</p>
+  </div>
+</footer>
+
+</body>
+</html>
