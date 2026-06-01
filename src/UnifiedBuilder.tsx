@@ -404,45 +404,126 @@ function ExtractionHealthCard({
   );
 }
 
+// ─── Risk Summary data for expanded field map ──────────────────────────────
+type RiskCategory = { name: string; cells: ("high" | "medium" | "low")[] };
+const RISK_CATEGORIES: RiskCategory[] = [
+  { name: "Coverage Details",   cells: ["low", "medium", "high", "high", "medium", "high", "medium"] },
+  { name: "Benefits",           cells: ["medium", "medium", "high", "high", "high", "medium", "low"] },
+  { name: "Waiting Period",     cells: ["medium", "high", "high", "high", "medium", "medium"] },
+  { name: "Premium Rating",     cells: ["high", "high", "medium", "high", "medium", "high", "low"] },
+  { name: "Member Eligibility", cells: ["low", "high", "high", "medium", "high", "medium", "medium"] },
+];
+
 // ─── Field Map Card ──────────────────────────────────────────────────────────
 function FieldMapCard() {
+  const [expanded, setExpanded] = useState(false);
+  const [riskTier, setRiskTier] = useState("Mini");
+
   return (
     <div style={{
       background: C.surf,
       border: `1px solid ${C.border}`,
       borderRadius: 12,
-      padding: "14px 18px",
+      padding: "16px 18px",
     }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: C.text2, letterSpacing: "0.06em", margin: "0 0 3px", textTransform: "uppercase" }}>
+          <p style={{ fontSize: 10.5, fontWeight: 700, color: C.text2, letterSpacing: "0.06em", margin: "0 0 4px", textTransform: "uppercase" }}>
             FIELD MAP
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>89%</span>
-            <span style={{ fontSize: 12, color: C.text2 }}>extraction health</span>
-            <ChevronDown size={13} color={C.text2} />
-          </div>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              display: "flex", alignItems: "center", gap: 4,
+              background: "transparent", border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
+            }}
+          >
+            <span style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>89%</span>
+            <span style={{ fontSize: 13, color: C.text2 }}>extraction health</span>
+            {expanded
+              ? <ChevronUp size={14} color={C.text2} />
+              : <ChevronDown size={14} color={C.text2} />
+            }
+          </button>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <LegendDot color={C.brandLight} label="High" />
           <LegendDot color={C.amber} label="Medium" />
           <LegendDot color={C.red} label="Low" />
-          <button style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text2, display: "flex", padding: 0 }}>
-            <Maximize2 size={12} />
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              background: C.surf, border: `1px solid ${C.border}`,
+              cursor: "pointer", color: C.text2,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, borderRadius: 6,
+            }}
+          >
+            <Maximize2 size={14} />
           </button>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(31, 1fr)", gap: 2.5 }}>
+      {/* Heatmap grid — wider gaps */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(31, 1fr)", gap: 4 }}>
         {FIELD_CELLS.map((c, i) => (
           <div key={i} style={{
             aspectRatio: "1",
-            borderRadius: 2.5,
+            borderRadius: 3,
             background: CELL_COLOR[c],
           }} />
         ))}
       </div>
+
+      {/* Expanded: Risk Summary */}
+      {expanded && (
+        <div style={{ marginTop: 16 }}>
+          {/* Divider */}
+          <div style={{ height: 1, background: C.border, marginBottom: 16 }} />
+
+          {/* Risk Summary header + tier dropdown */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: C.ink, margin: 0, fontFamily: FONT }}>Risk Summary</h3>
+            <button
+              onClick={() => setRiskTier(riskTier === "Mini" ? "Medi" : riskTier === "Medi" ? "Max" : "Mini")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "5px 12px", borderRadius: 8,
+                background: C.surf, border: `1px solid ${C.border}`,
+                fontSize: 12.5, fontWeight: 600, color: C.ink,
+                cursor: "pointer", fontFamily: FONT,
+              }}
+            >
+              <div style={{
+                width: 7, height: 7, borderRadius: "50%",
+                background: riskTier === "Mini" ? C.amber : riskTier === "Medi" ? C.amber : C.red,
+              }} />
+              {riskTier}
+              <ChevronDown size={12} color={C.text2} />
+            </button>
+          </div>
+
+          {/* Category grid — 3 columns top row, 2 columns bottom */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "18px 24px" }}>
+            {RISK_CATEGORIES.map(cat => (
+              <div key={cat.name}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: C.ink, margin: "0 0 8px", fontFamily: FONT }}>
+                  {cat.name}
+                </p>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {cat.cells.map((c, i) => (
+                    <div key={i} style={{
+                      width: 20, height: 20, borderRadius: 3.5,
+                      background: CELL_COLOR[c],
+                    }} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
