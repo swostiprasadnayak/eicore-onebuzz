@@ -108,7 +108,7 @@ const DESIGNS = [
     ],
   },
   {
-    src: "/final-designs/04-tree.png",
+    src: "/final-designs/06-heor.png",
     label: "Unified Workspace",
     title: "The product builder's home screen.",
     summary: "Every signal needed to start verifying — extraction health, source documents, plan structure, and open issues — consolidated into one view without hunting across tabs.",
