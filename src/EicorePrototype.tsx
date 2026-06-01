@@ -11,6 +11,7 @@ import CaseStudy from "./CaseStudy";
 import CommentsLayer from "./CommentsLayer";
 import TreeExpansion from "./TreeExpansion";
 import UnifiedBuilder from "./UnifiedBuilder";
+import DesignSystem from "./DesignSystem";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared bits
@@ -103,7 +104,12 @@ function GlobalSidebar() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Header (with Case Study / Prototype toggle)
 // ─────────────────────────────────────────────────────────────────────────────
-function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: "prototype" | "case-study"; setView: (v: "prototype" | "case-study") => void; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
+function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: "prototype" | "case-study" | "design-system"; setView: (v: "prototype" | "case-study" | "design-system") => void; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
+  const TABS: { id: "prototype" | "case-study" | "design-system"; label: string }[] = [
+    { id: "prototype",      label: "Prototype"      },
+    { id: "case-study",     label: "Case Study"     },
+    { id: "design-system",  label: "Design System"  },
+  ];
   return (
     <header style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: C.card, borderBottom: `1px solid ${C.border}`, borderRadius: "12px 12px 0 0", zIndex: 10, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -117,10 +123,10 @@ function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSi
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: C.bgTertiary, border: `1px solid ${C.border}` }}>
-          {(["prototype", "case-study"] as const).map(v => (
-            <button className="nav-tab" key={v} onClick={() => setView(v)}
-              style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: view === v ? C.card : "transparent", color: view === v ? C.brand : C.text3, boxShadow: view === v ? C.shadowSm : "none" }}>
-              {v === "prototype" ? "Prototype" : "Case Study"}
+          {TABS.map(({ id, label }) => (
+            <button className="nav-tab" key={id} onClick={() => setView(id)}
+              style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: view === id ? C.card : "transparent", color: view === id ? C.brand : C.text3, boxShadow: view === id ? C.shadowSm : "none", whiteSpace: "nowrap" }}>
+              {label}
             </button>
           ))}
         </div>
@@ -788,7 +794,7 @@ export function StakeholderDashboard({ onBack }: { onBack: () => void }) {
 // App shell
 // ─────────────────────────────────────────────────────────────────────────────
 export default function EicoreApp() {
-  const [view, setView] = useState<"prototype" | "case-study">("prototype");
+  const [view, setView] = useState<"prototype" | "case-study" | "design-system">("prototype");
   const [step, setStep] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
@@ -806,6 +812,7 @@ export default function EicoreApp() {
       <GlobalSidebar />
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100vh", overflow: "hidden", padding: "16px 20px" }}>
         <Header view={view} setView={setView} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
+
         <div style={{ display: "flex", flex: 1, overflow: "hidden", background: C.card, borderRadius: "0 0 12px 12px", boxShadow: C.shadowMd, border: `1px solid ${C.border}`, borderTop: "none" }}>
           {view === "prototype" ? (
             <>
@@ -821,14 +828,18 @@ export default function EicoreApp() {
                 {step === 5 && <StakeholderDashboard onBack={() => setStep(4)} />}
               </main>
             </>
-          ) : (
+          ) : view === "case-study" ? (
             <main style={{ flex: 1, overflowY: "auto", background: C.card, borderRadius: "0 0 12px 12px" }}>
               <CaseStudy onOpenPrototype={(s) => { if (typeof s === "number") setStep(s); setView("prototype"); }} />
+            </main>
+          ) : (
+            <main style={{ flex: 1, overflowY: "auto", background: C.card, borderRadius: "0 0 12px 12px" }}>
+              <DesignSystem />
             </main>
           )}
         </div>
       </div>
-      <CommentsLayer context={view === "prototype" ? `prototype:${step}` : "case-study"} />
+      <CommentsLayer context={view === "prototype" ? `prototype:${step}` : view === "case-study" ? "case-study" : "design-system"} />
     </div>
   );
 }
