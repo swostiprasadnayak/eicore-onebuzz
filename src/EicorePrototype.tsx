@@ -4,7 +4,7 @@ import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, UploadCloud, FileText,
   FileSpreadsheet, Plus, Clock, ArrowRight, ArrowLeft, AlertTriangle, AlertCircle,
   FileSearch, ShieldCheck, FolderTree, BookOpen, Settings, Activity, ExternalLink,
-  Shield, Calendar, FileType, Link2, PanelLeftClose, PanelLeftOpen,
+  Shield, Calendar, FileType, Link2, PanelLeftClose, PanelLeftOpen, Check,
 } from "lucide-react";
 import { C, T, card, pill, btn } from "./theme";
 import CaseStudy from "./CaseStudy";
@@ -149,40 +149,49 @@ const STEPS = [
 
 function StepSidebar({ currentStep, setCurrentStep, collapsed, onToggle }: { currentStep: number; setCurrentStep: (n: number) => void; collapsed?: boolean; onToggle?: () => void }) {
   return (
-    <aside style={{ width: collapsed ? 0 : 260, minWidth: collapsed ? 0 : 260, background: C.card, borderRight: collapsed ? "none" : `1px solid ${C.border}`, overflow: "hidden", transition: "width .22s ease, min-width .22s ease", flexShrink: 0 }}>
-      <div style={{ width: 260, height: "100%", boxSizing: "border-box", overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 16, padding: "0 4px" }}>
-          <h3 style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Builder Roadmap</h3>
+    <aside style={{ width: collapsed ? 0 : 240, minWidth: collapsed ? 0 : 240, background: C.card, borderRight: collapsed ? "none" : `1px solid ${C.border}`, overflow: "hidden", transition: "width .22s ease, min-width .22s ease", flexShrink: 0 }}>
+      <div style={{ width: 240, height: "100%", boxSizing: "border-box", overflowY: "auto", padding: "20px 14px", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 14, padding: "0 4px" }}>
+          <h3 style={{ fontWeight: 700, fontSize: 13, color: C.text }}>Builder Roadmap</h3>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {STEPS.map(step => {
           const isActive = currentStep === step.id;
           const isPast = currentStep > step.id;
           return (
             <div key={step.id} onClick={() => setCurrentStep(step.id)} className="sidebar-step-card"
-              style={{ background: C.card, borderRadius: 8, padding: "14px 16px", cursor: "pointer", transition: "all .15s ease", border: `1px solid ${isActive ? C.border : "transparent"}`, boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.06)" : "none", opacity: isPast ? 0.85 : 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {isPast || isActive
-                  ? <CheckCircle2 size={18} style={{ color: C.brand, flexShrink: 0 }} fill={C.brand} color="#fff" />
-                  : <Circle size={18} style={{ color: C.borderStrong, flexShrink: 0 }} />}
-                <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500, color: isActive || isPast ? C.text : "#6B7280" }}>{step.name}</span>
+              style={{ background: isActive ? C.card : "transparent", borderRadius: 8, padding: "10px 12px", cursor: "pointer", transition: "all .15s ease", border: `1px solid ${isActive ? C.border : "transparent"}`, boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.04)" : "none" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                {/* Status indicator */}
+                {isPast ? (
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", background: C.brandTint, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Check size={11} color={C.brand} strokeWidth={3} />
+                  </div>
+                ) : isActive ? (
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", background: C.brand, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
+                  </div>
+                ) : (
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${C.borderStrong}`, background: "transparent", flexShrink: 0 }} />
+                )}
+                <span style={{ fontSize: 12.5, fontWeight: isActive ? 600 : 500, color: isActive ? C.text : isPast ? C.text2 : C.text3 }}>{step.name}</span>
               </div>
               {isActive && step.subSteps && (
-                <div style={{ marginTop: 12, paddingLeft: 28 }}>
-                  <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-                    <span style={{ fontSize: 11, color: "#6B7280", fontWeight: 500 }}>1 of {step.subSteps.length}</span>
-                    <div style={{ flex: 1, height: 4, background: C.border, borderRadius: 999, overflow: "hidden", margin: "0 8px" }}>
+                <div style={{ marginTop: 10, paddingLeft: 27 }}>
+                  <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+                    <span style={{ fontSize: 10, color: C.text2, fontWeight: 500 }}>1 of {step.subSteps.length}</span>
+                    <div style={{ flex: 1, height: 3, background: C.border, borderRadius: 999, overflow: "hidden", margin: "0 8px" }}>
                       <div style={{ height: "100%", background: C.brand, width: `${step.progress}%`, borderRadius: 999 }} />
                     </div>
-                    <span style={{ fontSize: 11, color: "#6B7280", fontWeight: 500 }}>{step.progress}%</span>
+                    <span style={{ fontSize: 10, color: C.text2, fontWeight: 500 }}>{step.progress}%</span>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {step.subSteps.map((sub, idx) => (
-                      <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div key={idx} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         {idx <= (step.currentSubStep ?? 0)
-                          ? <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.brand, flexShrink: 0 }} />
-                          : <div style={{ width: 8, height: 8, borderRadius: "50%", border: `2px solid ${C.borderStrong}`, flexShrink: 0 }} />}
-                        <span style={{ fontSize: 12, color: idx <= (step.currentSubStep ?? 0) ? C.text : "#6B7280", fontWeight: idx <= (step.currentSubStep ?? 0) ? 500 : 400 }}>{sub}</span>
+                          ? <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.brand, flexShrink: 0 }} />
+                          : <div style={{ width: 6, height: 6, borderRadius: "50%", border: `1.5px solid ${C.borderStrong}`, flexShrink: 0 }} />}
+                        <span style={{ fontSize: 11, color: idx <= (step.currentSubStep ?? 0) ? C.text : C.text2, fontWeight: idx <= (step.currentSubStep ?? 0) ? 500 : 400 }}>{sub}</span>
                       </div>
                     ))}
                   </div>
