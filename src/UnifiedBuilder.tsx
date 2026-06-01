@@ -68,16 +68,33 @@ const PLANS = [
   { name: "Max",  items: planItems() },
 ];
 
-const TREE_NODES = [
-  { name: "Coverages",      count: 12, progress: [0.78, 0.18, 0.04], expanded: true,  children: [
-      { name: "In-patient Hospitalisation", verified: true },
-      { name: "ICU Charges",                verified: true },
-      { name: "Room Rent Cap",              verified: false },
-      { name: "OPD Cover",                  verified: false },
-    ]},
-  { name: "Plan Limits",    count: 5,  progress: [1, 0, 0],         expanded: false },
-  { name: "Plan Limits",    count: 5,  progress: [1, 0, 0],         expanded: false },
-  { name: "Premium Raters", count: 12, progress: [0.84, 0.10, 0.06], expanded: false },
+type TreeStatus = "ok" | "amber" | "red";
+type TreeNodeData = {
+  name: string;
+  count: number;
+  progress: number[];
+  expanded?: boolean;
+  dotColor?: TreeStatus;
+  children?: TreeNodeData[];
+};
+
+const TREE_DATA: TreeNodeData[] = [
+  {
+    name: "Coverages", count: 12,
+    progress: [0.62, 0.23, 0.15],
+    expanded: true,
+    dotColor: "ok",
+    children: [
+      { name: "Plan Limits", count: 5, progress: [1, 0, 0], dotColor: "red"   },
+      { name: "Plan Limits", count: 5, progress: [1, 0, 0], dotColor: "amber" },
+    ],
+  },
+  {
+    name: "Premium Raters", count: 12,
+    progress: [0.78, 0.12, 0.10],
+    expanded: false,
+    dotColor: "ok",
+  },
 ];
 
 type FeedItem = { kind: "blocker" | "warning"; tier: string; time: string; title: string };
@@ -599,47 +616,57 @@ function RightRail({ tab, setTab, activeTier, setActiveTier }: {
 function TreeTabContent({ activeTier, setActiveTier }: { activeTier: string; setActiveTier: (t: string) => void }) {
   return (
     <div style={{ padding: "14px 14px", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* PLAN VARIANTS — tier picker */}
       <div>
         <p style={{ fontSize: 10.5, fontWeight: 700, color: C.text2, letterSpacing: "0.06em", margin: "0 0 8px", textTransform: "uppercase" }}>
           PLAN VARIANTS
         </p>
-        <div style={{ display: "flex", gap: 4, padding: 3, background: C.surf2, borderRadius: 7, border: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", gap: 4, padding: 3, background: C.surf2, borderRadius: 9, border: `1px solid ${C.border}` }}>
           {["Mini", "Medi", "Max"].map(t => (
             <button key={t} onClick={() => setActiveTier(t)} style={{
-              flex: 1, padding: "5px 0", borderRadius: 5,
+              flex: 1, padding: "7px 0", borderRadius: 6,
               background: activeTier === t ? C.surf : "transparent",
               color: C.ink,
-              fontSize: 11.5, fontWeight: 600,
+              fontSize: 13, fontWeight: 700,
               border: "none", cursor: "pointer",
-              boxShadow: activeTier === t ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
+              boxShadow: activeTier === t ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
               fontFamily: FONT,
             }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: t === "Mini" ? C.brand : t === "Medi" ? C.amber : C.red }} />
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: t === "Mini" ? C.brand : t === "Medi" ? C.amber : C.red }} />
               {t}
             </button>
           ))}
         </div>
       </div>
 
+      {/* MINI STRUCTURE — container with dotted background pattern */}
       <div style={{
         background: C.surf,
         border: `1px solid ${C.border}`,
-        borderRadius: 8,
-        padding: 12,
+        borderRadius: 12,
+        padding: 14,
+        backgroundImage: `radial-gradient(circle, ${C.border} 0.8px, transparent 0.8px)`,
+        backgroundSize: "10px 10px",
+        backgroundPosition: "5px 5px",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.brand }} />
-            <span style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.05em" }}>{activeTier.toUpperCase()} STRUCTURE</span>
-            <span style={{ fontSize: 10.5, color: C.text2 }}>· 26 fields</span>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.brand }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.05em" }}>{activeTier.toUpperCase()} STRUCTURE</span>
+            <span style={{ fontSize: 12, color: C.text2 }}>· 26 fields</span>
           </div>
-          <button style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text2, display: "flex", padding: 0 }}>
+          <button style={{
+            background: C.surf, border: `1px solid ${C.border}`,
+            cursor: "pointer", color: C.text2,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 24, height: 24, borderRadius: 5,
+          }}>
             <Maximize2 size={11} />
           </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {TREE_NODES.map((n, i) => <TreeNode key={i} node={n} />)}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {TREE_DATA.map((n, i) => <TreeNodeCard key={i} node={n} />)}
         </div>
       </div>
 
@@ -648,48 +675,56 @@ function TreeTabContent({ activeTier, setActiveTier }: { activeTier: string; set
   );
 }
 
-function TreeNode({ node }: { node: typeof TREE_NODES[number] }) {
+function TreeNodeCard({ node, isChild }: { node: TreeNodeData; isChild?: boolean }) {
+  const dotColor = node.dotColor === "red" ? C.red : node.dotColor === "amber" ? C.amber : C.brand;
   return (
-    <div>
+    <>
       <div style={{
-        background: C.surf2,
+        background: C.surf,
         border: `1px solid ${C.border}`,
-        borderRadius: 7,
-        padding: "8px 10px",
-        display: "flex", alignItems: "center", gap: 8,
+        borderRadius: 10,
+        padding: "10px 12px",
+        marginLeft: isChild ? 12 : 0,
+        display: "flex", alignItems: "center", gap: 10,
+        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+        cursor: "pointer",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-          <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.brand, flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{node.name}</span>
-          <span style={{ fontSize: 10.5, color: C.text2 }}>{node.count} fields</span>
+        <div style={{
+          width: 8, height: 8, borderRadius: "50%",
+          background: dotColor, flexShrink: 0,
+        }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: isChild ? 12.5 : 13.5, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.2 }}>
+            {node.name}
+          </p>
+          <p style={{ fontSize: 11, color: C.text2, margin: "2px 0 0", lineHeight: 1.2 }}>
+            {node.count} fields
+          </p>
         </div>
-        <div style={{ display: "flex", gap: 1, width: 50, height: 4, borderRadius: 100, overflow: "hidden", flexShrink: 0 }}>
+        <div style={{
+          display: "flex", gap: 1.5,
+          width: 72, height: 4.5,
+          borderRadius: 100, overflow: "hidden", flexShrink: 0,
+          background: C.borderSubtle,
+        }}>
           <div style={{ flex: node.progress[0], background: C.brand }} />
           {node.progress[1] > 0 && <div style={{ flex: node.progress[1], background: C.amber }} />}
           {node.progress[2] > 0 && <div style={{ flex: node.progress[2], background: C.red }} />}
         </div>
-        {node.expanded ? <ChevronDown size={11} color={C.text2} /> : <ChevronRight size={11} color={C.text2} />}
+        {isChild
+          ? <ChevronRight size={14} color={C.text3} />
+          : node.expanded
+            ? <ChevronUp size={14} color={C.text3} />
+            : <ChevronDown size={14} color={C.text3} />
+        }
       </div>
 
-      {node.expanded && node.children && (
-        <div style={{ paddingLeft: 14, marginTop: 4, display: "flex", flexDirection: "column", gap: 3 }}>
-          {node.children.map((ch, i) => (
-            <div key={i} style={{
-              padding: "5px 8px",
-              fontSize: 11, color: C.text,
-              display: "flex", alignItems: "center", gap: 5,
-              borderLeft: `1px solid ${C.border}`, marginLeft: 4, paddingLeft: 9,
-            }}>
-              {ch.verified
-                ? <CheckCircle2 size={9} color={C.brand} />
-                : <div style={{ width: 5, height: 5, borderRadius: "50%", border: `1px solid ${C.text3}` }} />
-              }
-              {ch.name}
-            </div>
-          ))}
+      {node.expanded && node.children && node.children.length > 0 && (
+        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+          {node.children.map((ch, i) => <TreeNodeCard key={i} node={ch} isChild />)}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
