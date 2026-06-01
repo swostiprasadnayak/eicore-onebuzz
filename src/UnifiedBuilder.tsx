@@ -158,7 +158,7 @@ export default function UnifiedBuilder({ onNext, onOpenTree }: { onNext: () => v
           <FieldMapCard />
           <PlanVariantsGrid onOpenTree={onOpenTree} onNext={onNext} />
         </main>
-        <RightRail tab={rightTab} setTab={setRightTab} activeTier={activeTier} setActiveTier={setActiveTier} />
+        <RightRail tab={rightTab} setTab={setRightTab} activeTier={activeTier} setActiveTier={setActiveTier} onOpenTree={onOpenTree} />
       </div>
     </div>
   );
@@ -564,9 +564,10 @@ function AddPlanCard() {
 // ─── Right Rail ──────────────────────────────────────────────────────────────
 type RightTab = "tree" | "issues" | "data" | "document";
 
-function RightRail({ tab, setTab, activeTier, setActiveTier }: {
+function RightRail({ tab, setTab, activeTier, setActiveTier, onOpenTree }: {
   tab: RightTab; setTab: (t: RightTab) => void;
   activeTier: string; setActiveTier: (t: string) => void;
+  onOpenTree: () => void;
 }) {
   const tabs: { id: RightTab; label: string; Icon: typeof GitBranch }[] = [
     { id: "tree",     label: "Tree",           Icon: GitBranch    },
@@ -604,7 +605,7 @@ function RightRail({ tab, setTab, activeTier, setActiveTier }: {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {tab === "tree"     && <TreeTabContent     activeTier={activeTier} setActiveTier={setActiveTier} />}
+        {tab === "tree"     && <TreeTabContent     activeTier={activeTier} setActiveTier={setActiveTier} onOpenTree={onOpenTree} />}
         {tab === "issues"   && <IssuesTabContent />}
         {tab === "data"     && <DataTabContent />}
         {tab === "document" && <DocumentTabContent />}
@@ -613,7 +614,23 @@ function RightRail({ tab, setTab, activeTier, setActiveTier }: {
   );
 }
 
-function TreeTabContent({ activeTier, setActiveTier }: { activeTier: string; setActiveTier: (t: string) => void }) {
+function TreeTabContent({ activeTier, setActiveTier, onOpenTree }: { activeTier: string; setActiveTier: (t: string) => void; onOpenTree: () => void }) {
+  const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set([0]));
+
+  const toggleNode = (idx: number) => {
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  /* Count total visible rows for slider dot count */
+  const totalVisible = TREE_DATA.reduce((acc, n, i) =>
+    acc + 1 + (expandedNodes.has(i) && n.children ? n.children.length : 0), 0);
+  const sliderDots = Math.min(totalVisible + 2, 7);
+
   return (
     <div style={{ padding: "14px 14px", display: "flex", flexDirection: "column", gap: 16 }}>
       {/* PLAN VARIANTS — tier picker */}
@@ -645,28 +662,72 @@ function TreeTabContent({ activeTier, setActiveTier }: { activeTier: string; set
         background: C.surf,
         border: `1px solid ${C.border}`,
         borderRadius: 12,
-        padding: 14,
+        padding: 16,
         backgroundImage: `radial-gradient(circle, ${C.border} 0.8px, transparent 0.8px)`,
         backgroundSize: "10px 10px",
         backgroundPosition: "5px 5px",
+        overflow: "hidden",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        {/* Header row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.brand }} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.05em" }}>{activeTier.toUpperCase()} STRUCTURE</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.05em" }}>MINI STRUCTURE</span>
             <span style={{ fontSize: 12, color: C.text2 }}>· 26 fields</span>
           </div>
-          <button style={{
+          <button onClick={onOpenTree} title="Expand to full tree view" style={{
             background: C.surf, border: `1px solid ${C.border}`,
             cursor: "pointer", color: C.text2,
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: 24, height: 24, borderRadius: 5,
+            width: 26, height: 26, borderRadius: 6,
           }}>
-            <Maximize2 size={11} />
+            <Maximize2 size={12} />
           </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {TREE_DATA.map((n, i) => <TreeNodeCard key={i} node={n} />)}
+
+        {/* Tree content with left vertical slider */}
+        <div style={{ display: "flex", gap: 8 }}>
+          {/* Vertical slider / scroll indicator */}
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            width: 14, flexShrink: 0, position: "relative",
+            paddingTop: 16, paddingBottom: 16,
+          }}>
+            {/* Track line */}
+            <div style={{
+              position: "absolute", left: "50%", transform: "translateX(-50%)",
+              top: 8, bottom: 8,
+              width: 2, background: C.border, borderRadius: 1,
+            }} />
+            {/* Dots */}
+            {Array.from({ length: sliderDots }).map((_, i) => {
+              const isThumb = i === Math.floor(sliderDots * 0.35);
+              return (
+                <div key={i} style={{
+                  width: isThumb ? 10 : 5,
+                  height: isThumb ? 10 : 5,
+                  borderRadius: "50%",
+                  background: isThumb ? C.surf : "transparent",
+                  border: `1.5px solid ${isThumb ? C.borderStrong : C.border}`,
+                  position: "relative", zIndex: 1,
+                  marginBottom: i < sliderDots - 1 ? 24 : 0,
+                  boxShadow: isThumb ? "0 0 0 2px rgba(0,0,0,0.04)" : "none",
+                }} />
+              );
+            })}
+          </div>
+
+          {/* Cards column */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+            {TREE_DATA.map((n, i) => (
+              <TreeNodeCard
+                key={i}
+                node={{ ...n, expanded: expandedNodes.has(i) }}
+                onToggle={() => toggleNode(i)}
+                onOpenTree={onOpenTree}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -675,20 +736,41 @@ function TreeTabContent({ activeTier, setActiveTier }: { activeTier: string; set
   );
 }
 
-function TreeNodeCard({ node, isChild }: { node: TreeNodeData; isChild?: boolean }) {
+function TreeNodeCard({ node, isChild, onToggle, onOpenTree }: {
+  node: TreeNodeData; isChild?: boolean;
+  onToggle?: () => void; onOpenTree?: () => void;
+}) {
   const dotColor = node.dotColor === "red" ? C.red : node.dotColor === "amber" ? C.amber : C.brand;
+  const [hovered, setHovered] = useState(false);
+
+  const handleClick = () => {
+    if (isChild && onOpenTree) {
+      onOpenTree(); // child card → drill into full tree view
+    } else if (onToggle) {
+      onToggle(); // parent card → expand / collapse children
+    }
+  };
+
   return (
     <>
-      <div style={{
-        background: C.surf,
-        border: `1px solid ${C.border}`,
-        borderRadius: 10,
-        padding: "10px 12px",
-        marginLeft: isChild ? 12 : 0,
-        display: "flex", alignItems: "center", gap: 10,
-        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-        cursor: "pointer",
-      }}>
+      <div
+        onClick={handleClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background: C.surf,
+          border: `1px solid ${hovered ? C.borderStrong : C.border}`,
+          borderRadius: 10,
+          padding: isChild ? "8px 10px" : "10px 12px",
+          marginLeft: isChild ? 8 : 0,
+          display: "flex", alignItems: "center", gap: 10,
+          boxShadow: hovered
+            ? "0 2px 6px rgba(15, 23, 42, 0.08)"
+            : "0 1px 2px rgba(15, 23, 42, 0.04)",
+          cursor: "pointer",
+          transition: "border-color 0.15s, box-shadow 0.15s",
+        }}
+      >
         <div style={{
           width: 8, height: 8, borderRadius: "50%",
           background: dotColor, flexShrink: 0,
@@ -720,8 +802,14 @@ function TreeNodeCard({ node, isChild }: { node: TreeNodeData; isChild?: boolean
       </div>
 
       {node.expanded && node.children && node.children.length > 0 && (
-        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
-          {node.children.map((ch, i) => <TreeNodeCard key={i} node={ch} isChild />)}
+        <div style={{
+          marginTop: 8,
+          display: "flex", flexDirection: "column", gap: 8,
+          paddingLeft: 4,
+        }}>
+          {node.children.map((ch, i) => (
+            <TreeNodeCard key={i} node={ch} isChild onOpenTree={onOpenTree} />
+          ))}
         </div>
       )}
     </>
