@@ -1,17 +1,28 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  ArrowLeft, ChevronRight, ChevronLeft, X, Check, AlertTriangle, AlertCircle,
-  FileText, ExternalLink, Search, Sparkles, ArrowRight,
+  ArrowLeft, ArrowRight, ChevronDown, ChevronRight, ChevronUp, ChevronLeft,
+  X, Check, AlertTriangle, AlertCircle, FileText, ExternalLink, Search,
+  Sparkles, Filter, Maximize2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { C, T, card, btn } from "./theme";
+import { C } from "./theme";
 import {
   PARAMETERS, DOCUMENTS,
   type Parameter, type PlanTier, type CategoryId,
 } from "./builder-data";
 
-// ── Local mappings ────────────────────────────────────────────────────────
-// Single brand colour discipline. No per-category rainbow — STATUS drives colour.
+// ── Extra tokens ─────────────────────────────────────────────────────────
+const FONT = "Inter, system-ui, -apple-system, sans-serif";
+const EX = {
+  brandTintSolid: "#d1fae5",
+  amberLight: "#fef3c7", amberDark: "#92400e",
+  redLight: "#fee2e2", redDark: "#991b1b",
+  successDark: "#065f46",
+  ink: "#0f172a",
+  surf3: "#f3f4f6",
+};
+
+// ── Local mappings ───────────────────────────────────────────────────────
 type TreeCat = "Plan Limits" | "Member Details" | "Coverages" | "Premium Raters";
 const TREE_CATS: { id: TreeCat; from: CategoryId[] }[] = [
   { id: "Plan Limits",    from: ["product", "plans"] },
@@ -23,9 +34,6 @@ const catOf = (p: Parameter): TreeCat =>
   TREE_CATS.find(t => t.from.includes(p.category))!.id;
 
 const TIERS: PlanTier[] = ["Mini", "Medi", "Max"];
-const TIER_SI: Record<PlanTier, string> = {
-  Mini: "₹4L – ₹5L", Medi: "₹6L – ₹10L", Max: "₹11L – ₹15L",
-};
 
 const isMissing = (p: Parameter, t: PlanTier) =>
   p.values[t].display.toLowerCase().includes("not");
@@ -39,42 +47,47 @@ const statusOf = (p: Parameter, t: PlanTier): Status => {
 const statusColor = (s: Status) =>
   s === "verified" ? C.success : s === "warning" ? C.warning : C.error;
 
+// ── Tab types ────────────────────────────────────────────────────────────
+type TopTab = "tree" | "extraction" | "issues" | "docs";
+const TOP_TABS: { id: TopTab; label: string }[] = [
+  { id: "tree",       label: "Tree" },
+  { id: "extraction", label: "Extraction" },
+  { id: "issues",     label: "Issues" },
+  { id: "docs",       label: "Docs" },
+];
+
 // ─────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────
-type FilterId = "all" | "attention" | "verified";
-
 export default function TreeExpansion({ onClose }: { onClose: () => void }) {
   const [tier, setTier] = useState<PlanTier>("Mini");
-  const [filter, setFilter] = useState<FilterId>("all");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [topTab, setTopTab] = useState<TopTab>("tree");
+  const [expandedCats, setExpandedCats] = useState<Set<TreeCat>>(new Set(["Plan Limits"]));
+  const [showLegend, setShowLegend] = useState(true);
 
   const selected = useMemo(
     () => PARAMETERS.find(p => p.id === selectedId) || null,
-    [selectedId]
+    [selectedId],
   );
 
-  const filteredFields = useMemo(() => {
-    return PARAMETERS.filter(p => {
-      if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-      const s = statusOf(p, tier);
-      if (filter === "verified") return s === "verified";
-      if (filter === "attention") return s !== "verified";
-      return true;
+  const filteredFields = useMemo(
+    () => PARAMETERS.filter(p =>
+      !search || p.name.toLowerCase().includes(search.toLowerCase()),
+    ),
+    [search],
+  );
+
+  const toggleCat = (cat: TreeCat) => {
+    setExpandedCats(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
     });
-  }, [search, filter, tier]);
+  };
 
-  const counts = useMemo(() => {
-    let v = 0, a = 0;
-    for (const p of PARAMETERS) {
-      const s = statusOf(p, tier);
-      if (s === "verified") v++; else a++;
-    }
-    return { all: PARAMETERS.length, verified: v, attention: a };
-  }, [tier]);
-
-  // Keyboard nav within drawer
+  // Keyboard nav inside drawer
   useEffect(() => {
     if (!selected) return;
     const onKey = (e: KeyboardEvent) => {
@@ -92,320 +105,422 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
   }, [selected]);
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: C.bgTertiary, position: "relative", overflow: "hidden" }}>
-
+    <div style={{
+      height: "100%", display: "flex", flexDirection: "column",
+      background: C.bgTertiary, overflow: "hidden",
+      fontFamily: FONT, position: "relative",
+    }}>
       {/* ── Top toolbar ─────────────────────────────────────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 14,
-        padding: "12px 24px",
-        background: C.card,
-        borderBottom: `1px solid ${C.border}`,
-        flexShrink: 0, flexWrap: "wrap" as const,
-      }}>
-        <button onClick={onClose} style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "6px 12px",
-          background: C.card, color: C.text,
-          border: `1px solid ${C.borderStrong}`,
-          borderRadius: 6,
-          fontSize: 12.5, fontWeight: 500,
-          cursor: "pointer", fontFamily: "inherit",
-        }}>
-          <ArrowLeft size={13} /> Back to Builder
-        </button>
+      <TopToolbar onClose={onClose} topTab={topTab} setTopTab={setTopTab} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.text3 }}>
-          <span style={{ fontWeight: 500 }}>Tree View</span>
-          <ChevronRight size={11} color={C.text3} />
-          <span style={{ fontWeight: 600, color: C.text }}>D.I.Y Health · {tier} Plan</span>
+      {/* ── Body: sidebar + canvas + drawer ─────────────────────────── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <LeftSidebar
+          tier={tier} setTier={setTier}
+          search={search} setSearch={setSearch}
+          expandedCats={expandedCats} toggleCat={toggleCat}
+          selectedId={selectedId} onSelectField={setSelectedId}
+          onClose={onClose}
+        />
+
+        {/* Center canvas */}
+        <div style={{
+          flex: 1, overflowY: "auto", overflowX: "auto",
+          padding: "24px 20px 80px",
+          position: "relative",
+        }}>
+          <CanvasContent
+            tier={tier} filteredFields={filteredFields}
+            selectedId={selectedId} onSelect={setSelectedId}
+          />
+
+          {/* Legend */}
+          {showLegend && (
+            <div style={{
+              position: "fixed", bottom: 24, right: selected ? 396 : 24,
+              background: C.card, border: `1px solid ${C.border}`,
+              borderRadius: 10, padding: "12px 16px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+              transition: "right 0.25s ease",
+              zIndex: 10,
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                marginBottom: 8, gap: 16,
+              }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: EX.ink }}>Legend</span>
+                <button onClick={() => setShowLegend(false)} style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: C.text3, padding: 0, display: "flex",
+                }}>
+                  <ChevronDown size={12} />
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <LegendRow color={C.success} label="High confidence" />
+                <LegendRow color={C.warning} label="Medium + tooltip" />
+                <LegendRow color={C.error} label="Low + blocker" />
+              </div>
+            </div>
+          )}
         </div>
 
-        <div style={{ flex: 1 }} />
+        {/* Right drawer */}
+        <AnimatePresence>
+          {selected && (
+            <>
+              <motion.div
+                key="scrim"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => setSelectedId(null)}
+                style={{
+                  position: "absolute", inset: 0,
+                  background: "rgba(15,23,42,0.04)", zIndex: 15,
+                }}
+              />
+              <motion.aside
+                key="drawer"
+                initial={{ x: 380 }} animate={{ x: 0 }} exit={{ x: 380 }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                style={{
+                  width: 360, flexShrink: 0,
+                  background: C.card,
+                  borderLeft: `1px solid ${C.border}`,
+                  boxShadow: "-8px 0 24px rgba(15,23,42,0.06)",
+                  display: "flex", flexDirection: "column",
+                  overflow: "hidden", zIndex: 20,
+                }}
+              >
+                <ParameterDrawer
+                  field={selected} tier={tier} setTier={setTier}
+                  onClose={() => setSelectedId(null)} onJump={setSelectedId}
+                />
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
 
-        {/* Tier picker */}
-        <SegmentedTier tier={tier} setTier={setTier} />
+// ─────────────────────────────────────────────────────────────────────────
+// Top toolbar — Back + tabs + right actions
+// ─────────────────────────────────────────────────────────────────────────
+function TopToolbar({ onClose, topTab, setTopTab }: {
+  onClose: () => void; topTab: TopTab; setTopTab: (t: TopTab) => void;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      padding: "10px 20px",
+      background: C.card,
+      borderBottom: `1px solid ${C.border}`,
+      flexShrink: 0,
+    }}>
+      <button onClick={onClose} style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "6px 14px", borderRadius: 7,
+        background: C.card, color: C.text,
+        border: `1px solid ${C.borderStrong}`,
+        fontSize: 12.5, fontWeight: 500,
+        cursor: "pointer", fontFamily: FONT,
+      }}>
+        <ArrowLeft size={13} /> Back to Builder
+      </button>
 
+      {/* Tab pills */}
+      <div style={{ display: "flex", gap: 2, marginLeft: 4 }}>
+        {TOP_TABS.map(t => {
+          const active = topTab === t.id;
+          return (
+            <button key={t.id} onClick={() => setTopTab(t.id)} style={{
+              padding: "6px 16px", borderRadius: 7,
+              background: active ? EX.brandTintSolid : "transparent",
+              color: active ? C.brand : C.text2,
+              fontSize: 12.5, fontWeight: 600,
+              border: active ? `1px solid ${C.brand}33` : "1px solid transparent",
+              cursor: "pointer", fontFamily: FONT,
+            }}>{t.label}</button>
+          );
+        })}
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      {/* Grade badge */}
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 5,
+        padding: "5px 12px", borderRadius: 7,
+        background: EX.brandTintSolid, border: `1px solid ${C.brand}33`,
+        fontSize: 12, fontWeight: 700, color: C.brand,
+      }}>
+        Grade ?
+      </div>
+
+      {/* Toolbar icons */}
+      {[Filter, Maximize2].map((Icon, i) => (
+        <button key={i} style={{
+          width: 30, height: 30, borderRadius: 7,
+          background: "transparent", border: `1px solid ${C.border}`,
+          cursor: "pointer", color: C.text2,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Icon size={14} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Left Sidebar — Search, tier picker, mini structure tree, submit
+// ─────────────────────────────────────────────────────────────────────────
+function LeftSidebar({ tier, setTier, search, setSearch, expandedCats, toggleCat, selectedId, onSelectField, onClose }: {
+  tier: PlanTier; setTier: (t: PlanTier) => void;
+  search: string; setSearch: (s: string) => void;
+  expandedCats: Set<TreeCat>; toggleCat: (c: TreeCat) => void;
+  selectedId: string | null; onSelectField: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <aside style={{
+      width: 224, flexShrink: 0,
+      borderRight: `1px solid ${C.border}`,
+      background: C.card,
+      display: "flex", flexDirection: "column",
+      overflow: "hidden", fontFamily: FONT,
+    }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px" }}>
         {/* Search */}
         <div style={{
           display: "flex", alignItems: "center", gap: 6,
-          padding: "6px 10px",
-          background: C.bgTertiary,
-          borderRadius: 6,
-          border: `1px solid ${C.border}`,
-          minWidth: 200,
+          padding: "7px 10px", background: C.bgTertiary,
+          border: `1px solid ${C.border}`, borderRadius: 7,
+          marginBottom: 16,
         }}>
           <Search size={12} color={C.text3} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search fields…"
-            style={{ border: "none", outline: "none", background: "none", flex: 1, fontSize: 12, color: C.text, fontFamily: "inherit", minWidth: 0 }}
+            placeholder="Jump to any field..."
+            style={{
+              border: "none", outline: "none", background: "none",
+              flex: 1, fontSize: 11.5, color: C.text, fontFamily: FONT, minWidth: 0,
+            }}
           />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ border: "none", background: "none", cursor: "pointer", display: "flex", color: C.text3, padding: 0 }}>
-              <X size={11} />
-            </button>
-          )}
         </div>
 
-        {/* Filter chips */}
-        <div style={{ display: "flex", gap: 4 }}>
-          {([
-            { id: "all", label: "All", n: counts.all },
-            { id: "attention", label: "Needs attention", n: counts.attention },
-            { id: "verified", label: "Verified", n: counts.verified },
-          ] as { id: FilterId; label: string; n: number }[]).map(c => (
-            <button
-              key={c.id}
-              onClick={() => setFilter(c.id)}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                padding: "5px 12px",
-                fontSize: 12, fontWeight: 500,
-                border: `1px solid ${filter === c.id ? C.brand : C.border}`,
-                background: filter === c.id ? C.brandTint : C.card,
-                color: filter === c.id ? C.brand : C.text2,
-                borderRadius: 999, cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              {c.label}
-              <span style={{ fontSize: 10, fontWeight: 600, color: filter === c.id ? C.brand : C.text3, opacity: 0.8 }}>{c.n}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* COVERAGE TIERS label */}
+        <p style={{
+          fontSize: 10, fontWeight: 700, color: C.text3,
+          letterSpacing: "0.08em", margin: "0 0 8px",
+          textTransform: "uppercase" as const,
+        }}>COVERAGE TIERS</p>
 
-      {/* ── Canvas ──────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "32px 24px 64px", position: "relative" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-
-          {/* Plan root card */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 12,
-              padding: "12px 18px",
-              background: C.card,
-              border: `1.5px solid ${C.brand}`,
-              borderRadius: 12,
-              boxShadow: "0 4px 12px rgba(4,120,87,0.10)",
-              minWidth: 280,
-            }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 7,
-                background: C.brand, color: "#fff",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 700, fontSize: 14, flexShrink: 0,
-              }}>{tier[0]}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{tier} Plan</div>
-                <div style={{ fontSize: 11, fontWeight: 400, color: C.text2, marginTop: 1 }}>SI {TIER_SI[tier]} · D.I.Y Health</div>
-              </div>
-              <span style={{
-                fontSize: 10, fontWeight: 600, color: C.brand,
-                padding: "3px 8px",
-                background: C.brandTint,
-                borderRadius: 999,
-                textTransform: "uppercase" as const,
-                letterSpacing: "0.06em",
-              }}>
-                {PARAMETERS.length} fields
-              </span>
-            </div>
-          </div>
-
-          {/* Connector — single short line from root */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-            <div style={{ width: 1, height: 24, background: C.borderStrong }} />
-          </div>
-
-          {/* 4 category columns */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 16,
-          }}>
-            {TREE_CATS.map(cat => {
-              const allFields = PARAMETERS.filter(p => catOf(p) === cat.id);
-              const visible = filteredFields.filter(p => catOf(p) === cat.id);
-              return (
-                <CategoryColumn
-                  key={cat.id}
-                  cat={cat.id}
-                  fields={visible}
-                  totalFields={allFields.length}
-                  tier={tier}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                />
-              );
-            })}
-          </div>
-
-          {/* Empty state */}
-          {filteredFields.length === 0 && (
-            <div style={{ textAlign: "center" as const, padding: "60px 20px", color: C.text3 }}>
-              <Search size={32} style={{ opacity: 0.4, marginBottom: 12 }} />
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text2 }}>No fields match your filters</div>
-              <div style={{ fontSize: 12, color: C.text3, marginTop: 4 }}>
-                Try clearing the search or switching filter
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Plan Editor drawer ──────────────────────────────────────── */}
-      <AnimatePresence>
-        {selected && (
-          <>
-            <motion.div
-              key="scrim"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => setSelectedId(null)}
-              style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,0.06)" }}
-            />
-            <motion.aside
-              key="drawer"
-              initial={{ x: 460 }} animate={{ x: 0 }} exit={{ x: 460 }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              style={{
-                position: "absolute", top: 0, right: 0, bottom: 0,
-                width: 440,
-                background: C.card,
-                borderLeft: `1px solid ${C.border}`,
-                boxShadow: "-12px 0 32px rgba(15,23,42,0.08)",
-                display: "flex", flexDirection: "column",
-              }}
-            >
-              <PlanEditor
-                field={selected}
-                tier={tier}
-                setTier={setTier}
-                onClose={() => setSelectedId(null)}
-                onJump={setSelectedId}
-              />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Tier segmented picker
-// ─────────────────────────────────────────────────────────────────────────
-function SegmentedTier({ tier, setTier }: { tier: PlanTier; setTier: (t: PlanTier) => void }) {
-  return (
-    <div style={{
-      display: "flex",
-      padding: 2,
-      background: C.bgTertiary,
-      borderRadius: 6,
-      border: `1px solid ${C.border}`,
-    }}>
-      {TIERS.map(t => (
-        <button
-          key={t}
-          onClick={() => setTier(t)}
-          style={{
-            padding: "5px 14px",
-            fontSize: 12, fontWeight: 600,
-            background: tier === t ? C.brand : "transparent",
-            color: tier === t ? "#fff" : C.text2,
-            border: "none", borderRadius: 4, cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          {t}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Category column
-// ─────────────────────────────────────────────────────────────────────────
-function CategoryColumn({
-  cat, fields, totalFields, tier, selectedId, onSelect,
-}: {
-  cat: TreeCat;
-  fields: Parameter[];
-  totalFields: number;
-  tier: PlanTier;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  // Health summary across the WHOLE category (not just filtered)
-  const allInCat = PARAMETERS.filter(p => catOf(p) === cat);
-  const counts = { verified: 0, warning: 0, blocker: 0 };
-  for (const p of allInCat) {
-    counts[statusOf(p, tier)]++;
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-      {/* Category header */}
-      <div style={{
-        padding: "10px 12px",
-        background: C.card,
-        border: `1px solid ${C.border}`,
-        borderRadius: 8,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{cat}</div>
-          <div style={{ fontSize: 10.5, fontWeight: 400, color: C.text3, marginTop: 2 }}>
-            {totalFields} {totalFields === 1 ? "field" : "fields"}
-          </div>
-        </div>
-        {/* Health summary */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-          {counts.blocker > 0 && (
-            <span style={{ fontSize: 10, fontWeight: 600, color: C.error, display: "inline-flex", alignItems: "center", gap: 3 }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.error }} />
-              {counts.blocker}
-            </span>
-          )}
-          {counts.warning > 0 && (
-            <span style={{ fontSize: 10, fontWeight: 600, color: C.warning, display: "inline-flex", alignItems: "center", gap: 3 }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.warning }} />
-              {counts.warning}
-            </span>
-          )}
-          {counts.blocker === 0 && counts.warning === 0 && (
-            <span style={{ fontSize: 10, fontWeight: 600, color: C.success, display: "inline-flex", alignItems: "center", gap: 3 }}>
-              <Check size={10} strokeWidth={2.5} /> ok
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Field cards */}
-      {fields.map(f => (
-        <FieldCard
-          key={f.id}
-          field={f}
-          tier={tier}
-          selected={selectedId === f.id}
-          onClick={() => onSelect(f.id)}
-        />
-      ))}
-
-      {/* Hint when nothing matches */}
-      {fields.length === 0 && totalFields > 0 && (
+        {/* Tier picker */}
         <div style={{
-          fontSize: 11, color: C.text3,
-          textAlign: "center" as const,
-          padding: "16px 12px",
-          background: C.card,
-          border: `1px dashed ${C.border}`,
-          borderRadius: 8,
+          display: "flex", gap: 3, padding: 2,
+          background: C.bgTertiary, borderRadius: 7,
+          border: `1px solid ${C.border}`, marginBottom: 18,
         }}>
-          No fields match
+          {TIERS.map(t => {
+            const active = tier === t;
+            const bgMap: Record<PlanTier, string> = { Mini: EX.brandTintSolid, Medi: EX.amberLight, Max: EX.redLight };
+            const fgMap: Record<PlanTier, string> = { Mini: C.brand, Medi: EX.amberDark, Max: EX.redDark };
+            return (
+              <button key={t} onClick={() => setTier(t)} style={{
+                flex: 1, padding: "6px 0", borderRadius: 5,
+                background: active ? bgMap[t] : "transparent",
+                color: active ? fgMap[t] : C.text2,
+                fontSize: 12, fontWeight: 700,
+                border: "none", cursor: "pointer", fontFamily: FONT,
+              }}>{t}</button>
+            );
+          })}
+        </div>
+
+        {/* MINI STRUCTURE */}
+        <p style={{
+          fontSize: 10, fontWeight: 700, color: C.text3,
+          letterSpacing: "0.08em", margin: "0 0 10px",
+          textTransform: "uppercase" as const,
+        }}>{tier.toUpperCase()} STRUCTURE</p>
+
+        {/* Tree categories */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {TREE_CATS.map(cat => {
+            const fields = PARAMETERS.filter(p => catOf(p) === cat.id);
+            const expanded = expandedCats.has(cat.id);
+            let ok = 0, warn = 0, bad = 0;
+            for (const f of fields) {
+              const s = statusOf(f, tier);
+              if (s === "verified") ok++; else if (s === "warning") warn++; else bad++;
+            }
+            const total = ok + warn + bad;
+
+            return (
+              <div key={cat.id}>
+                {/* Category row */}
+                <button
+                  onClick={() => toggleCat(cat.id)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 5,
+                    padding: "6px 4px", borderRadius: 5,
+                    background: "transparent", border: "none",
+                    cursor: "pointer", fontFamily: FONT, textAlign: "left" as const,
+                  }}
+                >
+                  {expanded
+                    ? <ChevronDown size={11} color={C.text3} />
+                    : <ChevronRight size={11} color={C.text3} />
+                  }
+                  <span style={{ fontSize: 12, fontWeight: 600, color: EX.ink, flex: 1, whiteSpace: "nowrap" as const }}>{cat.id}</span>
+                  {/* Mini progress bar */}
+                  <div style={{
+                    display: "flex", width: 36, height: 3.5,
+                    borderRadius: 100, overflow: "hidden", flexShrink: 0,
+                  }}>
+                    {total > 0 && <>
+                      <div style={{ flex: ok / total, background: C.success }} />
+                      {warn > 0 && <div style={{ flex: warn / total, background: C.warning }} />}
+                      {bad > 0 && <div style={{ flex: bad / total, background: C.error }} />}
+                    </>}
+                  </div>
+                  <span style={{
+                    fontSize: 10.5, fontWeight: 600, color: C.text3,
+                    minWidth: 14, textAlign: "right" as const,
+                  }}>{fields.length}</span>
+                </button>
+
+                {/* Expanded field list */}
+                {expanded && (
+                  <div style={{ paddingLeft: 18, marginBottom: 4 }}>
+                    {fields.map(f => {
+                      const isActive = selectedId === f.id;
+                      const sc = statusColor(statusOf(f, tier));
+                      return (
+                        <button
+                          key={f.id}
+                          onClick={() => onSelectField(f.id)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 5,
+                            width: "100%", padding: "4px 6px",
+                            borderRadius: 4,
+                            background: isActive ? C.brandTint : "transparent",
+                            border: "none", cursor: "pointer",
+                            fontFamily: FONT, textAlign: "left" as const,
+                          }}
+                        >
+                          <span style={{
+                            width: 4, height: 4, borderRadius: "50%",
+                            background: sc, flexShrink: 0,
+                          }} />
+                          <span style={{
+                            fontSize: 11, fontWeight: isActive ? 600 : 400,
+                            color: isActive ? C.brand : C.text,
+                            overflow: "hidden", textOverflow: "ellipsis",
+                            whiteSpace: "nowrap" as const,
+                          }}>{f.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Submit button */}
+      <div style={{ padding: "12px 14px", borderTop: `1px solid ${C.border}` }}>
+        <button onClick={onClose} style={{
+          width: "100%", display: "flex", alignItems: "center",
+          justifyContent: "center", gap: 6,
+          padding: "9px 0", borderRadius: 7,
+          background: C.brand, color: "#fff",
+          fontSize: 12.5, fontWeight: 600,
+          border: "none", cursor: "pointer", fontFamily: FONT,
+        }}>
+          Submit configuration <ArrowRight size={13} />
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Canvas Content — root card, connectors, 4 category columns
+// ─────────────────────────────────────────────────────────────────────────
+function CanvasContent({ tier, filteredFields, selectedId, onSelect }: {
+  tier: PlanTier; filteredFields: Parameter[];
+  selectedId: string | null; onSelect: (id: string) => void;
+}) {
+  return (
+    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      {/* Root plan card */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 10,
+          padding: "10px 20px", borderRadius: 10,
+          background: EX.brandTintSolid, border: `1.5px solid ${C.brand}`,
+          boxShadow: "0 2px 8px rgba(4,120,87,0.10)",
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 6,
+            background: C.brand, color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13, fontWeight: 700,
+          }}>{tier[0]}</div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: EX.ink }}>{tier} Plan</div>
+            <div style={{ fontSize: 10.5, color: C.text2 }}>D.I.Y Health Insurance</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Vertical connector from root */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 0 }}>
+        <div style={{ width: 1.5, height: 20, background: C.borderStrong }} />
+      </div>
+
+      {/* Horizontal connector */}
+      <div style={{
+        height: 1.5, background: C.border,
+        marginLeft: "12.5%", marginRight: "12.5%",
+        marginBottom: 0,
+      }} />
+
+      {/* 4 category columns */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gap: 14,
+      }}>
+        {TREE_CATS.map(cat => {
+          const visible = filteredFields.filter(p => catOf(p) === cat.id);
+          const allInCat = PARAMETERS.filter(p => catOf(p) === cat.id);
+          return (
+            <CategoryColumn
+              key={cat.id}
+              cat={cat.id}
+              fields={visible}
+              totalFields={allInCat.length}
+              tier={tier}
+              selectedId={selectedId}
+              onSelect={onSelect}
+            />
+          );
+        })}
+      </div>
+
+      {/* Empty state */}
+      {filteredFields.length === 0 && (
+        <div style={{ textAlign: "center" as const, padding: "60px 20px", color: C.text3 }}>
+          <Search size={32} style={{ opacity: 0.4, marginBottom: 12 }} />
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.text2 }}>No fields match your search</div>
         </div>
       )}
     </div>
@@ -413,90 +528,149 @@ function CategoryColumn({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Field card
+// Category Column
 // ─────────────────────────────────────────────────────────────────────────
-function FieldCard({
-  field, tier, selected, onClick,
-}: {
-  field: Parameter;
-  tier: PlanTier;
-  selected: boolean;
-  onClick: () => void;
+function CategoryColumn({ cat, fields, totalFields, tier, selectedId, onSelect }: {
+  cat: TreeCat; fields: Parameter[]; totalFields: number;
+  tier: PlanTier; selectedId: string | null; onSelect: (id: string) => void;
+}) {
+  const allInCat = PARAMETERS.filter(p => catOf(p) === cat);
+  let ok = 0, warn = 0, bad = 0;
+  for (const p of allInCat) {
+    const s = statusOf(p, tier);
+    if (s === "verified") ok++; else if (s === "warning") warn++; else bad++;
+  }
+  const total = ok + warn + bad;
+  const topColor = bad > 0 ? C.error : warn > 0 ? C.warning : C.success;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+      {/* Vertical connector from horizontal line */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div style={{ width: 1.5, height: 14, background: C.border }} />
+      </div>
+
+      {/* Category header card */}
+      <div style={{
+        padding: "10px 12px",
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 8,
+        borderTop: `3px solid ${topColor}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: EX.ink }}>{cat}</span>
+          <span style={{ fontSize: 10.5, color: C.text3, fontWeight: 500 }}>{totalFields}</span>
+        </div>
+        {total > 0 && (
+          <div style={{
+            display: "flex", height: 3, borderRadius: 100,
+            overflow: "hidden", marginTop: 8, background: EX.surf3,
+          }}>
+            <div style={{ flex: ok / total, background: C.success }} />
+            {warn > 0 && <div style={{ flex: warn / total, background: C.warning }} />}
+            {bad > 0 && <div style={{ flex: bad / total, background: C.error }} />}
+          </div>
+        )}
+      </div>
+
+      {/* Field cards */}
+      {fields.map(f => (
+        <FieldCard
+          key={f.id} field={f} tier={tier}
+          selected={selectedId === f.id}
+          onClick={() => onSelect(f.id)}
+        />
+      ))}
+
+      {fields.length === 0 && totalFields > 0 && (
+        <div style={{
+          fontSize: 11, color: C.text3, textAlign: "center" as const,
+          padding: "16px 12px", background: C.card,
+          border: `1px dashed ${C.border}`, borderRadius: 8,
+        }}>No fields match</div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Field Card
+// ─────────────────────────────────────────────────────────────────────────
+function FieldCard({ field, tier, selected, onClick }: {
+  field: Parameter; tier: PlanTier; selected: boolean; onClick: () => void;
 }) {
   const val = field.values[tier];
   const status = statusOf(field, tier);
   const missing = isMissing(field, tier);
   const sc = statusColor(status);
   const doc = DOCUMENTS.find(d => d.id === val.source.docId)!;
+  const [hovered, setHovered] = useState(false);
 
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        width: "100%",
-        textAlign: "left" as const,
+        width: "100%", textAlign: "left" as const,
         padding: "10px 12px",
         background: C.card,
-        border: `1px solid ${selected ? C.brand : C.border}`,
+        border: `1.5px solid ${selected ? C.brand : hovered ? C.borderStrong : C.border}`,
         borderRadius: 8,
         cursor: "pointer",
-        display: "flex",
-        flexDirection: "column" as const,
-        gap: 4,
-        boxShadow: selected ? `0 0 0 2px ${C.brand}25, 0 4px 12px rgba(4,120,87,0.10)` : "none",
-        transition: "all 150ms cubic-bezier(0.4,0,0.2,1)",
-        fontFamily: "inherit",
-      }}
-      onMouseEnter={(e) => {
-        if (!selected) e.currentTarget.style.borderColor = C.borderStrong;
-      }}
-      onMouseLeave={(e) => {
-        if (!selected) e.currentTarget.style.borderColor = C.border;
+        display: "flex", flexDirection: "column" as const, gap: 3,
+        boxShadow: selected
+          ? `0 0 0 2px ${C.brand}20, 0 4px 12px rgba(4,120,87,0.08)`
+          : hovered ? "0 2px 6px rgba(0,0,0,0.06)" : "0 1px 2px rgba(0,0,0,0.03)",
+        transition: "all 0.15s ease",
+        fontFamily: FONT,
       }}
     >
-      {/* Row 1: title + status icon */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text, lineHeight: 1.3, minWidth: 0, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-          {field.name}
-        </div>
+      {/* Row 1: title + status */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6 }}>
+        <span style={{
+          fontSize: 12, fontWeight: 600, color: EX.ink, lineHeight: 1.3,
+          flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
+        }}>{field.name}</span>
         {status === "verified" ? (
-          <Check size={12} color={C.success} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
+          <Check size={12} color={C.success} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 1 }} />
         ) : (
           <div style={{
-            width: 16, height: 16, borderRadius: "50%",
-            background: `${sc}1a`,
+            width: 14, height: 14, borderRadius: "50%",
+            background: `${sc}18`,
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
-            marginTop: 1,
           }}>
             {status === "blocker"
-              ? <AlertCircle size={10} color={sc} strokeWidth={2.5} />
-              : <AlertTriangle size={9} color={sc} strokeWidth={2.5} />}
+              ? <AlertCircle size={9} color={sc} strokeWidth={2.5} />
+              : <AlertTriangle size={8} color={sc} strokeWidth={2.5} />
+            }
           </div>
         )}
       </div>
 
       {/* Row 2: value */}
       <div style={{
-        fontSize: 12, fontWeight: 500,
+        fontSize: 11.5, fontWeight: 500,
         color: missing ? C.error : C.text,
-        lineHeight: 1.3,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap" as const,
+        lineHeight: 1.3, overflow: "hidden",
+        textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
       }}>
         {missing ? "Missing" : val.display}
       </div>
 
-      {/* Row 3: meta */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, color: C.text3, marginTop: 2 }}>
+      {/* Row 3: source + confidence */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 5,
+        fontSize: 10, color: C.text3, marginTop: 2,
+      }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-          <FileText size={9} />
-          {doc.type} p{val.source.page}
+          <FileText size={8} /> {doc.type} p{val.source.page}
         </span>
         <span style={{ color: C.border }}>·</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-          <Sparkles size={9} />
+          <Sparkles size={8} />
           {val.confidence === "high" ? "92%" : val.confidence === "medium" ? "75%" : "38%"}
         </span>
       </div>
@@ -505,332 +679,243 @@ function FieldCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Plan Editor (drawer body)
+// Parameter Drawer — matches Figma "Tree card.png" exactly
 // ─────────────────────────────────────────────────────────────────────────
-function PlanEditor({
-  field, tier, setTier, onClose, onJump,
-}: {
-  field: Parameter;
-  tier: PlanTier;
-  setTier: (t: PlanTier) => void;
-  onClose: () => void;
-  onJump: (id: string) => void;
+function ParameterDrawer({ field, tier, setTier, onClose, onJump }: {
+  field: Parameter; tier: PlanTier; setTier: (t: PlanTier) => void;
+  onClose: () => void; onJump: (id: string) => void;
 }) {
   const val = field.values[tier];
   const doc = DOCUMENTS.find(d => d.id === val.source.docId)!;
-  const cat = catOf(field);
-  const list = PARAMETERS.filter(p => catOf(p) === cat);
-  const idx = list.findIndex(p => p.id === field.id);
-  const status = statusOf(field, tier);
   const missing = isMissing(field, tier);
   const [draft, setDraft] = useState(val.display);
 
   useEffect(() => { setDraft(val.display); }, [field.id, tier, val.display]);
 
-  const nav = (dir: 1 | -1) => {
-    const next = (idx + dir + list.length) % list.length;
-    onJump(list[next].id);
-  };
-
   return (
     <>
-      {/* Sticky header */}
+      {/* ── Header ──────────────────────────────────────────────── */}
       <div style={{
-        flexShrink: 0,
-        padding: "14px 18px 12px",
-        borderBottom: `1px solid ${C.border}`,
+        padding: "16px 18px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
       }}>
-        {/* Row 1: close + position + nav */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={onClose} style={iconBtnStyle()}>
-            <X size={15} />
-          </button>
-          <div style={{ fontSize: 11, fontWeight: 500, color: C.text3 }}>
-            Field {idx + 1} of {list.length}
-          </div>
-          <div style={{ flex: 1 }} />
-          <div style={{ display: "flex", gap: 2 }}>
-            <button onClick={() => nav(-1)} title="Previous (←)" style={iconBtnStyle()}>
-              <ChevronLeft size={14} />
-            </button>
-            <button onClick={() => nav(1)} title="Next (→)" style={iconBtnStyle()}>
-              <ChevronRight size={14} />
-            </button>
-          </div>
+        {/* Label + close */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: 10,
+        }}>
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: C.text3,
+            letterSpacing: "0.08em", textTransform: "uppercase" as const,
+          }}>PARAMETER</span>
+          <button onClick={onClose} style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: C.text3, padding: 0, display: "flex",
+          }}><X size={16} /></button>
         </div>
 
         {/* Title */}
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: C.text, marginTop: 10, lineHeight: 1.2, margin: "10px 0 0 0" }}>
-          {field.name}
-        </h2>
+        <h2 style={{
+          fontSize: 18, fontWeight: 700, color: EX.ink,
+          margin: "0 0 12px", lineHeight: 1.2, fontFamily: FONT,
+        }}>{field.name}</h2>
 
-        {/* Sub-meta */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" as const }}>
-          <span style={{ fontSize: 11.5, fontWeight: 500, color: C.text2 }}>{cat}</span>
-          <span style={{ color: C.border }}>·</span>
-          <a href="#" onClick={e => e.preventDefault()} style={{ fontSize: 11.5, fontWeight: 500, color: C.brand, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 3 }}>
-            <FileText size={11} /> {doc.type} p{val.source.page}
-          </a>
-          <span style={{ color: C.border }}>·</span>
-          <StatusPill status={status} />
+        {/* Tier pills */}
+        <div style={{ display: "flex", gap: 6 }}>
+          {TIERS.map(t => {
+            const active = t === tier;
+            return (
+              <button key={t} onClick={() => setTier(t)} style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "4px 12px", borderRadius: 20,
+                background: active ? C.brandTint : "transparent",
+                border: `1px solid ${active ? C.brand + "44" : C.border}`,
+                color: active ? C.brand : C.text2,
+                fontSize: 12, fontWeight: 600,
+                cursor: "pointer", fontFamily: FONT,
+              }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: active ? C.brand : "transparent",
+                  border: active ? "none" : `1.5px solid ${C.text3}`,
+                }} />
+                {t}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Scrollable body */}
+      {/* ── Scrollable body ─────────────────────────────────────── */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 18px 24px" }}>
 
-        {/* Across Tiers */}
-        <Section label="Across plan tiers">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {TIERS.map(t => {
-              const v = field.values[t];
-              const ts = statusOf(field, t);
-              const tm = isMissing(field, t);
-              const active = t === tier;
-              return (
-                <button
-                  key={t}
-                  onClick={() => setTier(t)}
-                  style={{
-                    textAlign: "left" as const,
-                    padding: "8px 10px",
-                    background: C.card,
-                    border: `1px solid ${active ? C.brand : C.border}`,
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    boxShadow: active ? `0 0 0 1px ${C.brand}40` : "none",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor(ts) }} />
-                    <span style={{ fontSize: 10.5, fontWeight: 700, color: active ? C.brand : C.text2 }}>{t}</span>
-                  </div>
-                  <div style={{
-                    fontSize: 12.5, fontWeight: 500,
-                    color: tm ? C.error : C.text,
-                    marginTop: 4,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap" as const,
-                  }}>
-                    {tm ? "Missing" : v.display}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </Section>
-
-        {/* Value editor */}
-        <Section label="Value">
-          <Label>AI extracted</Label>
+        {/* EXTRACTED VALUE */}
+        <DrawerSection label="EXTRACTED VALUE">
+          {/* AI value (gray box) */}
           <div style={{
-            marginTop: 6,
-            padding: "10px 12px",
-            background: C.bgTertiary,
-            border: `1px solid ${C.border}`,
-            borderRadius: 6,
+            padding: "10px 12px", background: C.bgTertiary,
+            border: `1px solid ${C.border}`, borderRadius: 7,
             fontSize: 13, fontWeight: 500, color: C.text2,
+            marginBottom: 10,
           }}>
             {val.display}
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <Label>Your value</Label>
+          {/* Editable value with check */}
+          <div style={{
+            padding: "9px 12px",
+            border: `1px solid ${C.border}`, borderRadius: 7,
+            fontSize: 13, fontWeight: 500, color: EX.ink,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
             <input
               value={draft}
               onChange={e => setDraft(e.target.value)}
               style={{
-                marginTop: 6,
-                width: "100%",
-                padding: "10px 12px",
-                background: C.card,
-                border: `1px solid ${C.border}`,
-                borderRadius: 6,
-                fontSize: 13, fontWeight: 500, color: C.text,
-                outline: "none",
-                fontFamily: "inherit",
-                boxSizing: "border-box" as const,
+                border: "none", outline: "none", background: "none",
+                flex: 1, fontSize: 13, fontWeight: 500, color: EX.ink,
+                fontFamily: FONT, minWidth: 0,
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = C.brand; e.currentTarget.style.boxShadow = `0 0 0 3px ${C.brand}15`; }}
-              onBlur={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = "none"; }}
             />
+            <Check size={14} color={C.success} />
           </div>
 
-          <div style={{ marginTop: 8, fontSize: 11, color: C.text3 }}>
-            {field.unit ? `Unit: ${field.unit}` : "Free text"} · Required
-          </div>
-
-          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-            <button
-              onClick={() => setDraft(val.display)}
-              style={{
-                ...btn("secondary", true),
-                padding: "6px 12px",
-              }}
-            >
-              Reset to AI
-            </button>
-            <button
-              style={{
-                ...btn("primary", true),
-                padding: "6px 14px",
-              }}
-            >
-              Save changes
+          {/* Buttons */}
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button onClick={() => setDraft(val.display)} style={{
+              padding: "7px 14px", borderRadius: 7,
+              background: C.card, color: C.text,
+              border: `1px solid ${C.borderStrong}`,
+              fontSize: 12, fontWeight: 600,
+              cursor: "pointer", fontFamily: FONT,
+            }}>Revert to AI</button>
+            <button style={{
+              padding: "7px 14px", borderRadius: 7,
+              background: C.brand, color: "#fff", border: "none",
+              fontSize: 12, fontWeight: 600,
+              cursor: "pointer", fontFamily: FONT,
+              display: "inline-flex", alignItems: "center", gap: 5,
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
+              Mark verified
             </button>
           </div>
-        </Section>
+        </DrawerSection>
 
-        {/* Source passage */}
-        <Section label="Source passage">
-          <div style={{ fontSize: 11.5, fontWeight: 500, color: C.text2 }}>
-            {doc.name} · Page {val.source.page}
-          </div>
+        {/* SOURCE PASSAGE */}
+        <DrawerSection label="SOURCE PASSAGE">
+          {/* Open document link */}
           <div style={{
-            marginTop: 8,
-            padding: 12,
-            background: C.bgTertiary,
-            border: `1px solid ${C.border}`,
-            borderRadius: 6,
-            fontSize: 12.5, fontWeight: 400, color: C.text2, lineHeight: 1.6,
+            display: "flex", justifyContent: "flex-end", marginBottom: 8,
           }}>
-            {val.source.context.split(/(\{\{[^}]+\}\})/g).map((part, i) =>
-              part.startsWith("{{") ? (
-                <mark key={i} style={{
-                  background: C.warningTint,
-                  boxShadow: `inset 0 -2px 0 ${C.warning}`,
-                  color: C.text, padding: "1px 3px",
-                  fontWeight: 500,
-                }}>
-                  {part.slice(2, -2)}
-                </mark>
-              ) : <span key={i}>{part}</span>
-            )}
+            <button style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: C.brand, fontSize: 11.5, fontWeight: 500,
+              display: "inline-flex", alignItems: "center", gap: 3,
+              padding: 0, fontFamily: FONT,
+            }}>Open document <ExternalLink size={10} /></button>
           </div>
-          <button style={{
-            marginTop: 8,
-            display: "inline-flex", alignItems: "center", gap: 4,
-            fontSize: 11.5, fontWeight: 500, color: C.brand,
-            background: "none", border: "none", cursor: "pointer", padding: 0,
-            fontFamily: "inherit",
-          }}>
-            Open full document <ExternalLink size={11} />
-          </button>
-        </Section>
 
-        {/* Dependencies */}
-        <Section label="Dependencies (3)">
-          {[
-            "Premium Calculation (Rule)",
-            "Age Band Mapping (Rate Card)",
-            "Member Eligibility Check (Rule)",
-          ].map(d => (
-            <button
-              key={d}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                width: "100%",
-                padding: "8px 10px",
-                marginBottom: 4,
-                background: C.card,
-                border: `1px solid ${C.border}`,
-                borderRadius: 6,
-                cursor: "pointer",
-                fontSize: 12, fontWeight: 500, color: C.text,
-                fontFamily: "inherit",
-                textAlign: "left" as const,
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = C.bgTertiary}
-              onMouseLeave={e => e.currentTarget.style.background = C.card}
-            >
+          {/* Document chip */}
+          <div style={{
+            padding: "9px 12px", background: C.bgTertiary,
+            border: `1px solid ${C.border}`, borderRadius: 7,
+            display: "flex", alignItems: "center", gap: 6,
+            marginBottom: 8,
+          }}>
+            <FileText size={11} color={C.text3} />
+            <span style={{ fontSize: 12, color: C.text2, fontWeight: 500 }}>{doc.name}</span>
+          </div>
+
+          {/* Highlighted passage */}
+          <div style={{
+            padding: "10px 12px",
+            background: EX.amberLight,
+            border: `1px solid ${C.warning}33`,
+            borderRadius: 7,
+            fontSize: 12.5, fontWeight: 500,
+            color: EX.ink, lineHeight: 1.5,
+          }}>
+            {val.source.context.replace(/\{\{|\}\}/g, "")}
+          </div>
+
+          {/* Jump link */}
+          <button style={{
+            marginTop: 10, background: "none", border: "none",
+            cursor: "pointer", fontFamily: FONT, padding: 0,
+            display: "inline-flex", alignItems: "center", gap: 4,
+            fontSize: 11.5, fontWeight: 500, color: C.warning,
+            textDecoration: "underline",
+          }}>
+            <ChevronRight size={10} /> Jump: First passage in parameter
+          </button>
+        </DrawerSection>
+
+        {/* CROSS-CHECKS */}
+        <DrawerSection label="CROSS-CHECKS (2)">
+          {["Premium Calculation (Rule)", "Member Eligibility Check (Rule)"].map(d => (
+            <button key={d} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              width: "100%", padding: "9px 10px", marginBottom: 4,
+              background: C.card, border: `1px solid ${C.border}`,
+              borderRadius: 7, cursor: "pointer",
+              fontSize: 12, fontWeight: 500, color: EX.ink,
+              fontFamily: FONT, textAlign: "left" as const,
+            }}>
               <span>{d}</span>
-              <ArrowRight size={12} color={C.text3} />
+              <ChevronRight size={12} color={C.text3} />
             </button>
           ))}
-        </Section>
+        </DrawerSection>
       </div>
 
-      {/* Sticky footer */}
+      {/* ── Footer ──────────────────────────────────────────────── */}
       <div style={{
-        flexShrink: 0,
-        padding: 14,
+        flexShrink: 0, padding: "12px 18px",
         borderTop: `1px solid ${C.border}`,
-        background: C.card,
+        display: "flex", gap: 8, justifyContent: "flex-end",
       }}>
-        <button
-          style={{
-            width: "100%",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            padding: "11px 16px",
-            background: missing ? C.text : C.brand,
-            color: "#fff",
-            border: "none", borderRadius: 8,
-            fontSize: 13, fontWeight: 600,
-            cursor: "pointer", fontFamily: "inherit",
-          }}
-        >
-          <Check size={15} /> {missing ? "Fill in value" : "Mark Verified"}
+        <button style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          padding: "7px 14px", borderRadius: 7,
+          background: C.card, color: C.text,
+          border: `1px solid ${C.borderStrong}`,
+          fontSize: 12, fontWeight: 600,
+          cursor: "pointer", fontFamily: FONT,
+        }}>
+          <Sparkles size={12} /> AI Assist
         </button>
+        <button style={{
+          padding: "7px 14px", borderRadius: 7,
+          background: C.brand, color: "#fff", border: "none",
+          fontSize: 12, fontWeight: 600,
+          cursor: "pointer", fontFamily: FONT,
+        }}>Add</button>
       </div>
     </>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Bits
+// Small helpers
 // ─────────────────────────────────────────────────────────────────────────
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function DrawerSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{
-        fontSize: 10.5, fontWeight: 700, color: C.text3,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase" as const,
+        fontSize: 10, fontWeight: 700, color: C.text3,
+        letterSpacing: "0.08em", textTransform: "uppercase" as const,
         marginBottom: 10,
-      }}>
-        {label}
-      </div>
+      }}>{label}</div>
       {children}
     </div>
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
+function LegendRow({ color, label }: { color: string; label: string }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 500, color: C.text2 }}>
-      {children}
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+      <span style={{ fontSize: 11.5, color: C.text2, fontWeight: 500 }}>{label}</span>
     </div>
   );
-}
-
-function StatusPill({ status }: { status: Status }) {
-  const meta = status === "verified"
-    ? { bg: C.successTint, fg: C.success, icon: <Check size={11} />, label: "Verified" }
-    : status === "warning"
-      ? { bg: C.warningTint, fg: C.warning, icon: <AlertTriangle size={10} />, label: "Needs review" }
-      : { bg: C.errorTint, fg: C.error, icon: <AlertCircle size={10} />, label: "Missing" };
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "2px 8px",
-      background: meta.bg,
-      color: meta.fg,
-      borderRadius: 999,
-      fontSize: 10.5, fontWeight: 600,
-    }}>
-      {meta.icon} {meta.label}
-    </span>
-  );
-}
-
-function iconBtnStyle(): React.CSSProperties {
-  return {
-    display: "flex", alignItems: "center", justifyContent: "center",
-    width: 26, height: 26, borderRadius: 6,
-    border: "none", background: "transparent",
-    cursor: "pointer", color: C.text2,
-    fontFamily: "inherit",
-  };
 }
