@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft, ArrowRight, ChevronDown, ChevronRight, ChevronUp, ChevronLeft,
   X, Check, AlertTriangle, AlertCircle, FileText, ExternalLink, Search,
   Sparkles, Filter, Maximize2, Minimize2, Plus, Minus, MessageCircle,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { C } from "./theme";
@@ -76,7 +77,51 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expandedCats, setExpandedCats] = useState<Set<TreeCat>>(new Set(["Plan Limits"]));
   const [showLegend, setShowLegend] = useState(true);
-  const [zoom, setZoom] = useState(60);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // ── Canvas pan/zoom state ──────────────────────────────────────────────
+  const [zoom, setZoom] = useState(0.7);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const isPanning = useRef(false);
+  const lastMouse = useRef({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      // Pinch-to-zoom / ctrl+scroll = zoom
+      const delta = -e.deltaY * 0.001;
+      setZoom(z => Math.min(2, Math.max(0.2, z + delta * z)));
+    } else {
+      // Regular scroll = pan
+      setPan(p => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    isPanning.current = true;
+    lastMouse.current = { x: e.clientX, y: e.clientY };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning.current) return;
+    const dx = e.clientX - lastMouse.current.x;
+    const dy = e.clientY - lastMouse.current.y;
+    lastMouse.current = { x: e.clientX, y: e.clientY };
+    setPan(p => ({ x: p.x + dx, y: p.y + dy }));
+  };
+  const onMouseUp = () => { isPanning.current = false; };
+
+  const zoomIn  = () => setZoom(z => Math.min(2,   Math.round((z + 0.1) * 10) / 10));
+  const zoomOut = () => setZoom(z => Math.max(0.2, Math.round((z - 0.1) * 10) / 10));
+  const resetView = () => { setZoom(0.7); setPan({ x: 0, y: 0 }); };
 
   const selected = useMemo(
     () => PARAMETERS.find(p => p.id === selectedId) || null,
@@ -127,12 +172,15 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
       {/* ── Top toolbar ─────────────────────────────────────────── */}
       <TopToolbar
         onClose={onClose} totalIssues={totalIssues}
-        zoom={zoom} setZoom={setZoom}
+        zoom={zoom} zoomIn={zoomIn} zoomOut={zoomOut} resetView={resetView}
+        sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)}
       />
 
       {/* ── Body ────────────────────────────────────────────────── */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <LeftSidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(c => !c)}
           tier={tier} setTier={setTier}
           search={search} setSearch={setSearch}
           filterText={filterText} setFilterText={setFilterText}
@@ -141,25 +189,69 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
           onClose={onClose}
         />
 
-        <div style={{
-          flex: 1, overflowY: "auto", overflowX: "auto",
-          padding: "24px 20px 80px",
-          position: "relative",
-        }}>
-          <CanvasContent
-            tier={tier} filteredFields={filteredFields}
-            selectedId={selectedId} onSelect={setSelectedId}
-          />
+        {/* ── Zoomable / pannable canvas ─────────────────────── */}
+        <div
+          ref={canvasRef}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          style={{
+            flex: 1, overflow: "hidden",
+            position: "relative",
+            cursor: isPanning.current ? "grabbing" : "grab",
+            background: C.bgTertiary,
+            backgroundImage: `radial-gradient(circle, ${C.borderStrong} 1px, transparent 1px)`,
+            backgroundSize: `${Math.max(16, 24 * zoom)}px ${Math.max(16, 24 * zoom)}px`,
+            backgroundPosition: `${pan.x % (24 * zoom)}px ${pan.y % (24 * zoom)}px`,
+          }}
+        >
+          {/* Transform container */}
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0,
+            transformOrigin: "50% 30%",
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            willChange: "transform",
+            padding: "60px 40px 120px",
+          }}>
+            <CanvasContent
+              tier={tier} filteredFields={filteredFields}
+              selectedId={selectedId} onSelect={setSelectedId}
+            />
+          </div>
+
+          {/* Zoom controls overlay */}
+          <div style={{
+            position: "absolute", bottom: 16, left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex", alignItems: "center", gap: 0,
+            background: C.card, border: `1px solid ${C.border}`,
+            borderRadius: 8, overflow: "hidden",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}>
+            <button onClick={zoomOut} style={zoomBtnStyle()}>
+              <Minus size={12} />
+            </button>
+            <button onClick={resetView} style={{
+              ...zoomBtnStyle(),
+              minWidth: 52, borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`,
+              fontSize: 11.5, fontWeight: 600, color: C.text2,
+            }}>
+              {Math.round(zoom * 100)}%
+            </button>
+            <button onClick={zoomIn} style={zoomBtnStyle()}>
+              <Plus size={12} />
+            </button>
+          </div>
 
           {/* Floating action button */}
           <button style={{
-            position: "fixed", bottom: 24, right: selected ? 396 : 24,
+            position: "absolute", bottom: 16, right: 20,
             width: 44, height: 44, borderRadius: "50%",
             background: C.brand, color: "#fff", border: "none",
             cursor: "pointer", boxShadow: "0 4px 12px rgba(4,120,87,0.25)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "right 0.25s ease",
-            zIndex: 10,
           }}>
             <MessageCircle size={20} />
           </button>
@@ -167,11 +259,10 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
           {/* Legend */}
           {showLegend && (
             <div style={{
-              position: "fixed", bottom: 80, right: selected ? 396 : 24,
+              position: "absolute", bottom: 80, right: 20,
               background: C.card, border: `1px solid ${C.border}`,
               borderRadius: 10, padding: "12px 16px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              transition: "right 0.25s ease",
               zIndex: 10, minWidth: 160,
             }}>
               <div style={{
@@ -188,7 +279,7 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <LegendRow color={C.success} label="High confidence" />
-                <LegendRow color={C.warning} label="Missing / blocker" />
+                <LegendRow color={C.warning} label="Medium / warning" />
                 <LegendRow color={C.error} label="Missing / blocker" />
                 <LegendRow color={C.text3} label="Ungraded" />
               </div>
@@ -239,9 +330,19 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
 // ─────────────────────────────────────────────────────────────────────────
 // Top toolbar — matches Figma Row 2
 // ─────────────────────────────────────────────────────────────────────────
-function TopToolbar({ onClose, totalIssues, zoom, setZoom }: {
+function zoomBtnStyle(): React.CSSProperties {
+  return {
+    width: 28, height: 28, border: "none",
+    background: "transparent", cursor: "pointer", color: C.text2,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "Inter, system-ui, sans-serif",
+  };
+}
+
+function TopToolbar({ onClose, totalIssues, zoom, zoomIn, zoomOut, resetView, sidebarCollapsed, onToggleSidebar }: {
   onClose: () => void; totalIssues: number;
-  zoom: number; setZoom: (z: number) => void;
+  zoom: number; zoomIn: () => void; zoomOut: () => void; resetView: () => void;
+  sidebarCollapsed: boolean; onToggleSidebar: () => void;
 }) {
   return (
     <div style={{
@@ -305,29 +406,39 @@ function TopToolbar({ onClose, totalIssues, zoom, setZoom }: {
         <ChevronDown size={10} color={C.brand} />
       </div>
 
-      {/* Zoom controls */}
+      {/* Sidebar toggle in top bar */}
+      <button onClick={onToggleSidebar} style={{
+        width: 28, height: 28, borderRadius: 6,
+        background: sidebarCollapsed ? C.brandTint : "transparent",
+        border: `1px solid ${sidebarCollapsed ? C.brand + "44" : C.border}`,
+        cursor: "pointer", color: sidebarCollapsed ? C.brand : C.text2,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {sidebarCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
+      </button>
+
+      {/* Zoom display (read-only in toolbar — functional zoom in canvas) */}
       <div style={{
         display: "inline-flex", alignItems: "center", gap: 0,
-        border: `1px solid ${C.border}`, borderRadius: 6,
-        overflow: "hidden",
+        border: `1px solid ${C.border}`, borderRadius: 6, overflow: "hidden",
       }}>
-        <button onClick={() => setZoom(Math.max(20, zoom - 10))} style={{
+        <button onClick={zoomOut} style={{
           width: 26, height: 26, border: "none", borderRight: `1px solid ${C.border}`,
           background: C.card, cursor: "pointer", color: C.text2,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}><Minus size={11} /></button>
-        <span style={{
+        <button onClick={resetView} style={{
           padding: "0 8px", fontSize: 11, fontWeight: 600, color: C.text2,
-          minWidth: 32, textAlign: "center" as const,
-        }}>{zoom}%</span>
-        <button onClick={() => setZoom(Math.min(200, zoom + 10))} style={{
+          minWidth: 38, textAlign: "center" as const, border: "none",
+          background: C.card, cursor: "pointer", fontFamily: FONT, height: 26,
+        }}>{Math.round(zoom * 100)}%</button>
+        <button onClick={zoomIn} style={{
           width: 26, height: 26, border: "none", borderLeft: `1px solid ${C.border}`,
           background: C.card, cursor: "pointer", color: C.text2,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}><Plus size={11} /></button>
       </div>
 
-      {/* Expand icons */}
       <button style={{
         width: 26, height: 26, borderRadius: 6,
         background: "transparent", border: `1px solid ${C.border}`,
@@ -341,7 +452,8 @@ function TopToolbar({ onClose, totalIssues, zoom, setZoom }: {
 // ─────────────────────────────────────────────────────────────────────────
 // Left Sidebar — matches Figma left panel exactly
 // ─────────────────────────────────────────────────────────────────────────
-function LeftSidebar({ tier, setTier, search, setSearch, filterText, setFilterText, expandedCats, toggleCat, selectedId, onSelectField, onClose }: {
+function LeftSidebar({ collapsed, onToggleCollapse, tier, setTier, search, setSearch, filterText, setFilterText, expandedCats, toggleCat, selectedId, onSelectField, onClose }: {
+  collapsed: boolean; onToggleCollapse: () => void;
   tier: PlanTier; setTier: (t: PlanTier) => void;
   search: string; setSearch: (s: string) => void;
   filterText: string; setFilterText: (s: string) => void;
@@ -351,34 +463,55 @@ function LeftSidebar({ tier, setTier, search, setSearch, filterText, setFilterTe
 }) {
   return (
     <aside style={{
-      width: 260, flexShrink: 0,
-      borderRight: `1px solid ${C.border}`,
+      width: collapsed ? 0 : 260,
+      minWidth: collapsed ? 0 : 260,
+      flexShrink: 0,
+      borderRight: collapsed ? "none" : `1px solid ${C.border}`,
       background: C.card,
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
+      transition: "width 0.22s ease, min-width 0.22s ease",
     }}>
+      <div style={{ width: 260, display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {/* Search — ⌘K */}
+        {/* Search — with collapse toggle next to it */}
         <div style={{ padding: "12px 12px 0" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "8px 11px", background: C.bgTertiary,
-            border: `1px solid ${C.border}`, borderRadius: 7,
           }}>
-            <Search size={12} color={C.text3} />
-            <input
-              value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Jump to any field..."
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, flex: 1,
+              padding: "8px 11px", background: C.bgTertiary,
+              border: `1px solid ${C.border}`, borderRadius: 7,
+            }}>
+              <Search size={12} color={C.text3} />
+              <input
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Jump to any field..."
+                style={{
+                  border: "none", outline: "none", background: "none",
+                  flex: 1, fontSize: 12, color: C.text, fontFamily: FONT, minWidth: 0,
+                }}
+              />
+              <span style={{
+                fontSize: 10, color: C.text3, fontWeight: 500,
+                background: C.bgTertiary, border: `1px solid ${C.border}`,
+                borderRadius: 4, padding: "1px 5px",
+              }}>⌘K</span>
+            </div>
+            {/* Collapse button right next to search */}
+            <button
+              onClick={onToggleCollapse}
+              title="Collapse sidebar"
               style={{
-                border: "none", outline: "none", background: "none",
-                flex: 1, fontSize: 12, color: C.text, fontFamily: FONT, minWidth: 0,
+                width: 30, height: 30, borderRadius: 6, flexShrink: 0,
+                background: "transparent", border: `1px solid ${C.border}`,
+                cursor: "pointer", color: C.text2,
+                display: "flex", alignItems: "center", justifyContent: "center",
               }}
-            />
-            <span style={{
-              fontSize: 10, color: C.text3, fontWeight: 500,
-              background: C.bgTertiary, border: `1px solid ${C.border}`,
-              borderRadius: 4, padding: "1px 5px",
-            }}>⌘K</span>
+            >
+              <PanelLeftClose size={14} />
+            </button>
           </div>
         </div>
 
@@ -584,6 +717,7 @@ function LeftSidebar({ tier, setTier, search, setSearch, filterText, setFilterTe
           ))}
         </div>
       </div>
+      </div>{/* end width:260 wrapper */}
     </aside>
   );
 }

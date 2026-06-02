@@ -106,8 +106,8 @@ function GlobalSidebar() {
 // ─────────────────────────────────────────────────────────────────────────────
 function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: "prototype" | "case-study" | "design-system"; setView: (v: "prototype" | "case-study" | "design-system") => void; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
   const TABS: { id: "prototype" | "case-study" | "design-system"; label: string }[] = [
-    { id: "prototype",      label: "Prototype"      },
     { id: "case-study",     label: "Case Study"     },
+    { id: "prototype",      label: "Prototype"      },
     { id: "design-system",  label: "Design System"  },
   ];
   return (
@@ -803,7 +803,7 @@ export function StakeholderDashboard({ onBack }: { onBack: () => void }) {
 // App shell
 // ─────────────────────────────────────────────────────────────────────────────
 export default function EicoreApp() {
-  const [view, setView] = useState<"prototype" | "case-study" | "design-system">("prototype");
+  const [view, setView] = useState<"prototype" | "case-study" | "design-system">("case-study");
   const [step, setStep] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
