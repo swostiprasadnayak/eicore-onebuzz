@@ -245,16 +245,8 @@ export default function TreeExpansion({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          {/* Floating action button */}
-          <button style={{
-            position: "absolute", bottom: 16, right: 20,
-            width: 44, height: 44, borderRadius: "50%",
-            background: C.brand, color: "#fff", border: "none",
-            cursor: "pointer", boxShadow: "0 4px 12px rgba(4,120,87,0.25)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <MessageCircle size={20} />
-          </button>
+          {/* Floating comment button — hover to expand */}
+          <FloatingCommentButton />
 
           {/* Legend */}
           {showLegend && (
@@ -1140,42 +1132,220 @@ function ParameterDrawer({ field, tier, setTier, onClose, onJump }: {
         </DrawerSection>
       </div>
 
-      {/* ── Footer with comment input ───────────────────────── */}
-      <div style={{
-        flexShrink: 0, padding: "10px 18px 12px",
-        borderTop: `1px solid ${C.border}`,
-      }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "8px 10px",
-          background: C.bgTertiary,
-          border: `1px solid ${C.border}`, borderRadius: 7,
-        }}>
-          <input
-            placeholder="Write a comment, @-mention or ask AI..."
-            style={{
-              border: "none", outline: "none", background: "none",
-              flex: 1, fontSize: 11.5, color: C.text, fontFamily: FONT, minWidth: 0,
-            }}
-          />
-          <button style={{
-            display: "inline-flex", alignItems: "center", gap: 4,
-            padding: "3px 8px", borderRadius: 5,
-            background: "transparent", border: "none",
-            color: C.text3, fontSize: 11, fontWeight: 500,
-            cursor: "pointer", fontFamily: FONT,
-          }}>
-            <Sparkles size={10} /> AI assist
-          </button>
-          <button style={{
-            padding: "4px 12px", borderRadius: 5,
-            background: C.brand, color: "#fff", border: "none",
-            fontSize: 11, fontWeight: 600,
-            cursor: "pointer", fontFamily: FONT,
-          }}>Ask</button>
-        </div>
-      </div>
+      {/* ── Footer — comment icon, hover to expand ──────────── */}
+      <DrawerCommentFooter />
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// FloatingCommentButton — icon only, hover reveals chat popup above
+// ─────────────────────────────────────────────────────────────────────────
+function FloatingCommentButton() {
+  const [open, setOpen] = useState(false);
+  const [comment, setComment] = useState("");
+
+  return (
+    <div
+      style={{
+        position: "absolute", bottom: 16, right: 20,
+        display: "flex", flexDirection: "column", alignItems: "flex-end",
+        gap: 8, zIndex: 20,
+      }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      {/* Hover-reveal chat popup — appears above the icon */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="comment-popup"
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            style={{
+              background: C.card,
+              border: `1px solid ${C.border}`,
+              borderRadius: 12,
+              boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
+              width: 300,
+              overflow: "hidden",
+            }}
+          >
+            {/* Popup header */}
+            <div style={{
+              padding: "10px 14px 8px",
+              borderBottom: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", gap: 6,
+            }}>
+              <MessageCircle size={13} color={C.brand} />
+              <span style={{
+                fontSize: 12, fontWeight: 700, color: EX.ink, fontFamily: FONT,
+              }}>Comment</span>
+            </div>
+
+            {/* Input area */}
+            <div style={{ padding: "10px 14px" }}>
+              <textarea
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                placeholder="Write a comment or @-mention..."
+                rows={3}
+                style={{
+                  width: "100%", border: `1px solid ${C.border}`,
+                  borderRadius: 7, padding: "8px 10px",
+                  background: C.bgTertiary,
+                  fontSize: 12, color: EX.ink, fontFamily: FONT,
+                  resize: "none", outline: "none",
+                  boxSizing: "border-box" as const,
+                  lineHeight: 1.5,
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = C.brand; }}
+                onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
+              />
+            </div>
+
+            {/* Action row */}
+            <div style={{
+              padding: "0 14px 12px",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <button style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "5px 10px", borderRadius: 6,
+                background: "transparent", border: `1px solid ${C.border}`,
+                color: C.text2, fontSize: 11.5, fontWeight: 500,
+                cursor: "pointer", fontFamily: FONT,
+              }}>
+                <Sparkles size={11} color={C.brand} /> AI assist
+              </button>
+              <button style={{
+                padding: "5px 16px", borderRadius: 6,
+                background: comment.trim() ? C.brand : C.bgTertiary,
+                color: comment.trim() ? "#fff" : C.text3,
+                border: "none", fontSize: 12, fontWeight: 600,
+                cursor: comment.trim() ? "pointer" : "default", fontFamily: FONT,
+                transition: "all 0.15s",
+              }}>
+                Post
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Icon button */}
+      <button style={{
+        width: 44, height: 44, borderRadius: "50%",
+        background: open ? C.brandSecondary : C.brand,
+        color: "#fff", border: "none",
+        cursor: "pointer",
+        boxShadow: open
+          ? "0 6px 20px rgba(4,120,87,0.35)"
+          : "0 4px 12px rgba(4,120,87,0.25)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        transition: "background 0.15s, box-shadow 0.15s, transform 0.15s",
+        transform: open ? "scale(1.05)" : "scale(1)",
+      }}>
+        <MessageCircle size={20} />
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// DrawerCommentFooter — icon only in the drawer, hover expands above AI chat
+// ─────────────────────────────────────────────────────────────────────────
+function DrawerCommentFooter() {
+  const [open, setOpen] = useState(false);
+  const [comment, setComment] = useState("");
+
+  return (
+    <div
+      style={{ flexShrink: 0, position: "relative" }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      {/* Expanded panel — slides up above the icon row */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="drawer-comment"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{
+              padding: "10px 18px 4px",
+              borderTop: `1px solid ${C.border}`,
+              background: C.card,
+            }}>
+              <textarea
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                placeholder="Write a comment, @-mention or ask AI..."
+                rows={2}
+                style={{
+                  width: "100%", border: `1px solid ${C.border}`,
+                  borderRadius: 7, padding: "8px 10px",
+                  background: C.bgTertiary,
+                  fontSize: 11.5, color: EX.ink, fontFamily: FONT,
+                  resize: "none", outline: "none",
+                  boxSizing: "border-box" as const,
+                  lineHeight: 1.5,
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = C.brand; }}
+                onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Always-visible footer row: icon + AI assist + Ask */}
+      <div style={{
+        padding: "8px 18px 12px",
+        borderTop: `1px solid ${C.border}`,
+        background: C.card,
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        {/* Comment icon — the "only icon" shown normally */}
+        <button style={{
+          width: 30, height: 30, borderRadius: 6,
+          background: open ? C.brandTint : C.bgTertiary,
+          border: `1px solid ${open ? C.brand + "44" : C.border}`,
+          color: open ? C.brand : C.text2,
+          cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "all 0.15s",
+          flexShrink: 0,
+        }}>
+          <MessageCircle size={14} />
+        </button>
+
+        <div style={{ flex: 1 }} />
+
+        {/* AI assist + Ask — these are the "AI chat" controls, comment icon sits above */}
+        <button style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          padding: "4px 10px", borderRadius: 6,
+          background: "transparent", border: "none",
+          color: C.text3, fontSize: 11, fontWeight: 500,
+          cursor: "pointer", fontFamily: FONT,
+        }}>
+          <Sparkles size={10} color={C.brand} /> AI assist
+        </button>
+        <button style={{
+          padding: "4px 14px", borderRadius: 6,
+          background: C.brand, color: "#fff", border: "none",
+          fontSize: 11, fontWeight: 600,
+          cursor: "pointer", fontFamily: FONT,
+        }}>Ask</button>
+      </div>
+    </div>
   );
 }
 
