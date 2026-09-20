@@ -120,7 +120,7 @@ function GlobalSidebar() {
 export type View = "prototype" | "case-study" | "design-system";
 const ALL_VIEWS: View[] = ["case-study", "prototype", "design-system"];
 
-function viewConfig(): { tabs: View[]; view: View; chrome: boolean } {
+function viewConfig(): { tabs: View[]; view: View; chrome: boolean; back: string | null } {
   const params = new URLSearchParams(window.location.search);
   const asked = (params.get("tabs") || "")
     .split(",").map(s => s.trim()).filter((t): t is View => (ALL_VIEWS as string[]).includes(t));
@@ -131,12 +131,29 @@ function viewConfig(): { tabs: View[]; view: View; chrome: boolean } {
     tabs,
     view: wanted && tabs.includes(wanted) ? wanted : tabs[0],
     chrome: chrome !== "0" && chrome !== "false",
+    back: safeBack(params.get("back")),
   };
+}
+
+// ?back=<url> puts a way out in the header. Opened from a portfolio in a new
+// tab there is otherwise nothing to click: the app fills the window, so the
+// only exit is the browser's own back button.
+//
+// Only http(s) is accepted, and only an absolute URL. A raw value would take
+// "javascript:..." just as happily, and this runs on whatever page links here.
+function safeBack(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw, window.location.origin);
+    return u.protocol === "http:" || u.protocol === "https:" ? u.href : null;
+  } catch {
+    return null;
+  }
 }
 
 // Header (with Case Study / Prototype toggle)
 // ─────────────────────────────────────────────────────────────────────────────
-function Header({ view, setView, tabs, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: View; setView: (v: View) => void; tabs: View[]; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
+function Header({ view, setView, tabs, back, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: View; setView: (v: View) => void; tabs: View[]; back?: string | null; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
   const LABELS: Record<View, string> = {
     "case-study":    "Case Study",
     "prototype":     "Prototype",
@@ -163,7 +180,19 @@ function Header({ view, setView, tabs, showSidebarToggle, sidebarCollapsed, onTo
             </button>
           ))}
         </div>
-        <button style={{ display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}`, borderRadius: 6, width: 28, height: 28, color: C.text2, background: C.card, cursor: "pointer" }}><Eye size={14} /></button>
+        {/* Where the app was opened from a portfolio, the last control in the
+            header is the way out. It replaces the preview eye rather than
+            sitting beside it: the eye does nothing here, and a close sits at
+            the top right by convention. Standalone — no ?back — the eye
+            stays and there is nothing to close to. */}
+        {back ? (
+          <a href={back} title="Close and return" aria-label="Close and return"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}`, borderRadius: 6, width: 28, height: 28, color: C.text2, background: C.card, cursor: "pointer", textDecoration: "none" }}>
+            <X size={15} />
+          </a>
+        ) : (
+          <button style={{ display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}`, borderRadius: 6, width: 28, height: 28, color: C.text2, background: C.card, cursor: "pointer" }}><Eye size={14} /></button>
+        )}
       </div>
     </header>
   );
@@ -836,7 +865,7 @@ export function StakeholderDashboard({ onBack }: { onBack: () => void }) {
 // App shell
 // ─────────────────────────────────────────────────────────────────────────────
 export default function EicoreApp() {
-  const [{ tabs, chrome }] = useState(viewConfig);
+  const [{ tabs, chrome, back }] = useState(viewConfig);
   const [view, setView] = useState<View>(() => viewConfig().view);
   const [step, setStep] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -854,7 +883,7 @@ export default function EicoreApp() {
     <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden", background: C.shell }}>
       {chrome && <GlobalSidebar />}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100vh", overflow: "hidden", padding: "16px 20px" }}>
-        <Header view={view} setView={setView} tabs={tabs} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
+        <Header view={view} setView={setView} tabs={tabs} back={back} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
 
         <div style={{ display: "flex", flex: 1, overflow: "hidden", background: C.card, borderRadius: "0 0 12px 12px", boxShadow: C.shadowMd, border: `1px solid ${C.border}`, borderTop: "none" }}>
           {view === "prototype" ? (
