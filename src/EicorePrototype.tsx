@@ -102,14 +102,37 @@ function GlobalSidebar() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Which tabs exist, and which one opens — both settable from the URL, so the
+// same build can be embedded somewhere that only wants part of it. Aditya's
+// portfolio frames this app next to its own written case study, so it asks for
+// ?tabs=prototype,design-system and the Case Study tab never appears.
+//
+//   ?tabs=prototype,design-system   the tabs to show, in order
+//   ?view=design-system             which one opens (defaults to the first)
+//
+// Unknown names are dropped and an empty result falls back to all three, so a
+// malformed link still renders the whole app rather than an empty header.
+export type View = "prototype" | "case-study" | "design-system";
+const ALL_VIEWS: View[] = ["case-study", "prototype", "design-system"];
+
+function viewConfig(): { tabs: View[]; view: View } {
+  const params = new URLSearchParams(window.location.search);
+  const asked = (params.get("tabs") || "")
+    .split(",").map(s => s.trim()).filter((t): t is View => (ALL_VIEWS as string[]).includes(t));
+  const tabs = asked.length ? asked : ALL_VIEWS;
+  const wanted = params.get("view") as View | null;
+  return { tabs, view: wanted && tabs.includes(wanted) ? wanted : tabs[0] };
+}
+
 // Header (with Case Study / Prototype toggle)
 // ─────────────────────────────────────────────────────────────────────────────
-function Header({ view, setView, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: "prototype" | "case-study" | "design-system"; setView: (v: "prototype" | "case-study" | "design-system") => void; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
-  const TABS: { id: "prototype" | "case-study" | "design-system"; label: string }[] = [
-    { id: "case-study",     label: "Case Study"     },
-    { id: "prototype",      label: "Prototype"      },
-    { id: "design-system",  label: "Design System"  },
-  ];
+function Header({ view, setView, tabs, showSidebarToggle, sidebarCollapsed, onToggleSidebar }: { view: View; setView: (v: View) => void; tabs: View[]; showSidebarToggle?: boolean; sidebarCollapsed?: boolean; onToggleSidebar?: () => void }) {
+  const LABELS: Record<View, string> = {
+    "case-study":    "Case Study",
+    "prototype":     "Prototype",
+    "design-system": "Design System",
+  };
+  const TABS = tabs.map(id => ({ id, label: LABELS[id] }));
   return (
     <header style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: C.card, borderBottom: `1px solid ${C.border}`, borderRadius: "12px 12px 0 0", zIndex: 10, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -803,7 +826,8 @@ export function StakeholderDashboard({ onBack }: { onBack: () => void }) {
 // App shell
 // ─────────────────────────────────────────────────────────────────────────────
 export default function EicoreApp() {
-  const [view, setView] = useState<"prototype" | "case-study" | "design-system">("case-study");
+  const [{ tabs }] = useState(viewConfig);
+  const [view, setView] = useState<View>(() => viewConfig().view);
   const [step, setStep] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
@@ -820,7 +844,7 @@ export default function EicoreApp() {
     <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden", background: C.shell }}>
       <GlobalSidebar />
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100vh", overflow: "hidden", padding: "16px 20px" }}>
-        <Header view={view} setView={setView} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
+        <Header view={view} setView={setView} tabs={tabs} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
 
         <div style={{ display: "flex", flex: 1, overflow: "hidden", background: C.card, borderRadius: "0 0 12px 12px", boxShadow: C.shadowMd, border: `1px solid ${C.border}`, borderTop: "none" }}>
           {view === "prototype" ? (
