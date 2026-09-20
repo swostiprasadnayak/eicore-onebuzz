@@ -109,19 +109,29 @@ function GlobalSidebar() {
 //
 //   ?tabs=prototype,design-system   the tabs to show, in order
 //   ?view=design-system             which one opens (defaults to the first)
+//   ?chrome=0                       drop the global icon rail
+//
+// The rail is product chrome — billing, workflows, templates — none of which
+// this prototype implements. Standalone it sets the scene; inside a portfolio
+// modal it is a column of dead icons taking width from the screen being shown.
 //
 // Unknown names are dropped and an empty result falls back to all three, so a
 // malformed link still renders the whole app rather than an empty header.
 export type View = "prototype" | "case-study" | "design-system";
 const ALL_VIEWS: View[] = ["case-study", "prototype", "design-system"];
 
-function viewConfig(): { tabs: View[]; view: View } {
+function viewConfig(): { tabs: View[]; view: View; chrome: boolean } {
   const params = new URLSearchParams(window.location.search);
   const asked = (params.get("tabs") || "")
     .split(",").map(s => s.trim()).filter((t): t is View => (ALL_VIEWS as string[]).includes(t));
   const tabs = asked.length ? asked : ALL_VIEWS;
   const wanted = params.get("view") as View | null;
-  return { tabs, view: wanted && tabs.includes(wanted) ? wanted : tabs[0] };
+  const chrome = params.get("chrome");
+  return {
+    tabs,
+    view: wanted && tabs.includes(wanted) ? wanted : tabs[0],
+    chrome: chrome !== "0" && chrome !== "false",
+  };
 }
 
 // Header (with Case Study / Prototype toggle)
@@ -826,7 +836,7 @@ export function StakeholderDashboard({ onBack }: { onBack: () => void }) {
 // App shell
 // ─────────────────────────────────────────────────────────────────────────────
 export default function EicoreApp() {
-  const [{ tabs }] = useState(viewConfig);
+  const [{ tabs, chrome }] = useState(viewConfig);
   const [view, setView] = useState<View>(() => viewConfig().view);
   const [step, setStep] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -842,7 +852,7 @@ export default function EicoreApp() {
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden", background: C.shell }}>
-      <GlobalSidebar />
+      {chrome && <GlobalSidebar />}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100vh", overflow: "hidden", padding: "16px 20px" }}>
         <Header view={view} setView={setView} tabs={tabs} showSidebarToggle={view === "prototype"} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
 
